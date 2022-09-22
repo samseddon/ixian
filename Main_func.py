@@ -1,6 +1,7 @@
 import os
 import fabio
 import time
+import Experimental_Details
 from useful_functions import progress_bar
 
 
@@ -31,4 +32,3 @@ for f in master_files:
     time.sleep(0.02)
     progress_bar(i+1,len(master_files))
     i=i+1
-print("\n")
