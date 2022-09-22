@@ -1,6 +1,14 @@
 import os
 import fabio
+import time
+from colorama import Fore
 
+def progress_bar(progress, total):
+    percent = 100 * (progress/float(total))
+    bar = '█' * int(percent) + '-' *(100-int(percent))
+    print(f"\r|{bar}| {percent:.2f}%", end = "\r")
+    if progress==total:
+        print(Fore.GREEN + f"\r|{bar}| {percent:.2f}%", end = "\n")
 
 with open('paths.txt') as f:
     lines = f.readlines()
@@ -15,6 +23,7 @@ master_files = [m for m in files_location if m.startswith(file_reference) and m.
 
 # Filter list down to only master files of a certain sample with the target scan number
 master_files = [c for c in master_files if int(c.split("_")[-2]) in scan_num]
+i=0
 for f in master_files:
     f = fabio.open(os.path.join(directory, f))
     #Stripping the header 
@@ -25,5 +34,7 @@ for f in master_files:
     omega = float(f.header.get("motor_pos").split(" ")[1])  # OMEGA VALUE
     # chi = float(f.header.get("motor_pos").split(" ")[2])  # CHI VALUE
     phi = float(f.header.get("motor_pos").split(" ")[3])  # PHI VALUE
-    print(phi)
-
+    time.sleep(0.02)
+    progress_bar(i+1,len(master_files))
+    i=i+1
+print("\n")
