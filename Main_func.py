@@ -88,8 +88,20 @@ def q_array_3d(Param_dict):
 
     return q_3d, x_slope, y_slope, z_slope, z_intercept, x_intercept, y_intercept, fqx, fqy, fqz
 
-
-
+def dead_pixel(f,param,two_theta_range):
+    #  REMOVE THE DEAD PIXELS
+    DeadRow1 = param['DeadRow1']   
+    # Defines the Dead regions on the Pilatus where the chips are connected - 300k so only in rows!   #######
+    DeadRow2 = param['DeadRow2']
+    DeadRow3 = param['DeadRow3']
+    DeadRow4 = param['DeadRow4']
+    f_new = np.concatenate((f.data[:DeadRow1 - 1, :],
+                        f.data[DeadRow2 + 1:DeadRow3 - 1, :],
+                        f.data[DeadRow4 + 1:, :]), axis=0)
+    two_theta_range_new = np.concatenate((two_theta_range[:DeadRow1 - 1],
+                                          two_theta_range[DeadRow2 + 1:DeadRow3 - 1],
+                                          two_theta_range[DeadRow4 + 1:]))
+    return f_new,two_theta_range_new
 
 #print(param)
 directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/data"
@@ -117,7 +129,11 @@ for k in range(len(master_files)):
     omega = float(f.header.get("motor_pos").split(" ")[1])  # OMEGA VALUE
     # chi = float(f.header.get("motor_pos").split(" ")[2])  # CHI VALUE
     phi = float(f.header.get("motor_pos").split(" ")[3])  # PHI VALUE
-    
+    wavelength = param['wavelength']
+    sat_pix =  param['sat_pix']
+    number_x = param['nr_pts_x']-1
+    number_y = param['nr_pts_y']-1
+    number_z = param['nr_pts_z']-1
     two_theta_range = np.array(generate_two_thetas(two_theta,param))
     two_theta_h_range = np.array(qy_angle(offset,param))
 
@@ -126,24 +142,7 @@ for k in range(len(master_files)):
     else: 
         omega_offset = 3.8765 
     omega = omega + omega_offset 
-    
-    #  REMOVE THE DEAD PIXELS
-    DeadRow1 = param['DeadRow1']   
-    # Defines the Dead regions on the Pilatus where the chips are connected - 300k so only in rows!   #######
-    DeadRow2 = param['DeadRow2']
-    DeadRow3 = param['DeadRow3']
-    DeadRow4 = param['DeadRow4']
-    wavelength = param['wavelength']
-    sat_pix =  param['sat_pix']
-    number_x = param['number_x']
-    number_y = param['number_y']
-    number_z = param['number_z']
-    f_new = np.concatenate((f.data[:DeadRow1 - 1, :],
-                        f.data[DeadRow2 + 1:DeadRow3 - 1, :],
-                        f.data[DeadRow4 + 1:, :]), axis=0)
-    two_theta_range_new = np.concatenate((two_theta_range[:DeadRow1 - 1],
-                                          two_theta_range[DeadRow2 + 1:DeadRow3 - 1],
-                                          two_theta_range[DeadRow4 + 1:]))
+    f_new,two_theta_range_new = dead_pixel(f,param,two_theta_range)
 
     f_new = (f_new / io) * 10 ** 6
     for i in range(f_new.shape[1]):
