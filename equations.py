@@ -20,6 +20,7 @@ def calc_qy(twoTheta, eta, wvl, angle_y):
     return qy
 
 def index_grid(Param_dict):  # This is the grid that keeps track of how mnay elements are being put into each Q voxel.    # Identical size to Q volume
+    global idx_grid
     idx_grid = np.zeros((Param_dict['nr_pts_x'], Param_dict['nr_pts_y'], Param_dict['nr_pts_z']))
     return idx_grid
 
@@ -33,10 +34,10 @@ def generate_two_thetas(TwoTheta0, Param_dict):
 
 
 
-def qy_angle(offset, Param_dict):
+def qy_angle(Param_dict):
     qy_angles = []
     for x in range(Param_dict['ShotHeight_y']):
-        angle = (Param_dict['Zero_Pixel_Hor'] - offset - float(x)) * 0.01126
+        angle = (Param_dict['Zero_Pixel_Hor'] - Param_dict['chi_offset'] - float(x)) * 0.01126
         # degrees per column determined from alignment calibration (pixel # vs. nu)
         qy_angles.append(angle)
     return qy_angles

@@ -7,11 +7,15 @@ from useful_functions import progress_bar,existential_check
 from Param_dict import param
 from equations import *
 from spot_dict import spot_dict
+from joblib import Parallel, delayed
+import multiprocessing as mp 
 
-
-
-def voxel_fill(fqx, fqy, fqz, i,j,attenuator,x_slope, x_intercept,y_slope,y_intercept,z_slope,z_intercept):
-
+def voxel_fill(f_new,omega, wavelength, two_theta_h_range, two_theta_range_new, 
+        i,j,attenuator,x_slope, x_intercept,y_slope,y_intercept,z_slope,
+        z_intercept, number_x,number_y, number_z,io,sat_pix):
+    fqx = calc_qx(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
+    fqy = calc_qy(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
+    fqz = calc_qz(two_theta_range_new[j], omega, wavelength)
     if attenuator == 0:
 
         if int(fqx * x_slope + x_intercept) > number_x \
@@ -75,7 +79,7 @@ def voxel_fill(fqx, fqy, fqz, i,j,attenuator,x_slope, x_intercept,y_slope,y_inte
                                int(fqy * y_slope + y_intercept),
                                int(fqz * z_slope + z_intercept)] + 1
 
-    return q_3d, idx_grid
+    return q_3d, idx_grid,i,j
 
 def q_lim(spot_dict,scan_num):
     import_var = "var_" + spot_dict[str(scan_num)]+'.txt'
@@ -86,7 +90,8 @@ def q_lim(spot_dict,scan_num):
     delta_qx_range = dict1['qx_max'] - dict1['qx_min']
     delta_qy_range = dict1['qy_max'] - dict1['qy_min']
     delta_qz_range = dict1['qz_max'] - dict1['qz_min']
-    return dict1['qz_min'],dict1['qz_max'],delta_qz_range,dict1['qx_min'],dict1['qx_max'],delta_qx_range,dict1['qy_min'],dict1['qy_max'],delta_qy_range
+    return dict1['qz_min'],dict1['qz_max'],delta_qz_range,dict1['qx_min'],\
+            dict1['qx_max'],delta_qx_range,dict1['qy_min'],dict1['qy_max'],delta_qy_range
     
 
 
@@ -97,6 +102,7 @@ def q_array_3d(param_dict,spot_dict,scan_num):
     nr_pts_x = param_dict['nr_pts_x']
     nr_pts_y = param_dict['nr_pts_y']
     nr_pts_z = param_dict['nr_pts_z']
+    global q_3d
     q_3d = np.zeros((nr_pts_x, nr_pts_y, nr_pts_z))
     qz_min,qz_max,delta_qz_range,qx_min,qx_max,delta_qx_range,qy_min,qy_max,delta_qy_range=q_lim(spot_dict,scan_num) 
 
@@ -131,49 +137,57 @@ q_3d, x_slope, y_slope, z_slope, z_intercept, x_intercept, y_intercept, qx, qy, 
 idx_grid = index_grid(param)
 offset = 0
 start_t = time.time()
-
-
-
-for k in range(len(master_files)):
-    f = fabio.open(os.path.join(directory, master_files[k]))
+def ixian(k,directory, master_files,param,q_3d, x_slope, y_slope, 
+        z_slope, z_intercept, x_intercept, y_intercept, idx_grid):
+    f1 = fabio.open(os.path.join(directory, master_files[k]))
+    f2 = f1
     #Stripping the header 
-    attenuator = float(f.header.get("counter_pos").split(" ")[24])
-    trans = float(f.header.get("counter_pos").split(" ")[23])
-    io = float(f.header.get("counter_pos").split(" ")[6])
-    two_theta = float(f.header.get("motor_pos").split(" ")[0])  # TWO THETA VALUE
-    omega = float(f.header.get("motor_pos").split(" ")[1])  # OMEGA VALUE
+    attenuator = float(f2.header.get("counter_pos").split(" ")[24])
+    trans = float(f2.header.get("counter_pos").split(" ")[23])
+    io = float(f2.header.get("counter_pos").split(" ")[6])
+    two_theta = float(f2.header.get("motor_pos").split(" ")[0])  # TWO THETA VALUE
+    omega = float(f2.header.get("motor_pos").split(" ")[1])  # OMEGA VALUE
     # chi = float(f.header.get("motor_pos").split(" ")[2])  # CHI VALUE
-    phi = float(f.header.get("motor_pos").split(" ")[3])  # PHI VALUE
+    phi = float(f2.header.get("motor_pos").split(" ")[3])  # PHI VALUE
     wavelength = param['wavelength']
     sat_pix =  param['sat_pix']
     number_x = param['nr_pts_x']-1
     number_y = param['nr_pts_y']-1
     number_z = param['nr_pts_z']-1
     two_theta_range = np.array(generate_two_thetas(two_theta,param))
-    two_theta_h_range = np.array(qy_angle(offset,param))
+    two_theta_h_range = np.array(qy_angle(param))
 
     if phi > - 50: 
         omega_offset = 1.6923 
     else: 
         omega_offset = 3.8765 
     omega = omega + omega_offset 
-    f_new,two_theta_range_new = dead_pixel(f,param,two_theta_range)
+    f2,two_theta_range_new = dead_pixel(f2,param,two_theta_range)
 
-    f_new = (f_new / io) * 10 ** 6
-    for i in range(f_new.shape[1]):
-        for j in range(f_new.shape[0]):  # FIRST ITERATE THE ROWS A.K.A TWO THETA
-            fqx = calc_qx(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
-            fqy = calc_qy(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
-            fqz = calc_qz(two_theta_range_new[j], omega, wavelength)
-            q_3d,idx_grid = voxel_fill(fqx,fqy,fqz,i,j,attenuator,
-                    x_slope, x_intercept,y_slope,y_intercept,z_slope,z_intercept)
-
-    f.close()
+    f2 = (f2 / io) * 10 ** 6
+    for i in range(f2.shape[1]):
+        for j in range(f2.shape[0]):  # FIRST ITERATE THE ROWS A.K.A TWO THETA
+            q_3d,idx_grid,i,j = voxel_fill(f2,omega, wavelength, two_theta_h_range,
+                    two_theta_range_new,i,j,attenuator,x_slope, 
+                    x_intercept,y_slope,y_intercept,z_slope,z_intercept,number_x,number_y,number_z,io,sat_pix)
+#    Parallel(n_jobs=2)(delayed(voxel_fill)(omega, wavelength, two_theta_h_range,
+#                     two_theta_range_new,i,j,attenuator,x_slope,
+#                     x_intercept,y_slope,y_intercept,z_slope,z_intercept) \
+#                             for i in range(f_new.shape[1]) for j in range(f_new.shape[0]))
+    f1.close()
 
     ##########################################
     progress_bar(k+1,len(master_files),start_t)
     ##########################################
+    return idx_grid, q_3d
 
+pool = mp.Pool(mp.cpu_count())
+[pool.apply(ixian,args=(k,directory, master_files,param,q_3d, x_slope, y_slope,z_slope, z_intercept, x_intercept, y_intercept,idx_grid)) for k in range(len(master_files))]
+pool.close()
+#Parallel(n_jobs=2)(delayed(ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,z_slope, z_intercept, x_intercept, y_intercept,idx_grid)) for k in range(len(master_files)))
+#for k in range(len(master_files)):
+#    idx_grid, q_3d = ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
+#            z_slope, z_intercept, x_intercept, y_intercept,idx_grid)
 
 for i in range(idx_grid.shape[0]):
     for j in range(idx_grid.shape[1]):
@@ -190,7 +204,7 @@ a = nexus.NXdata(signal=q_3d, axes=(qx, qy, qz), axes_names={'x': qx, 'y': qy, '
 orig_filename = str(scan_num[0])+'_3d_fill'
 suffix = '.nxs'
 a.save(existential_check(orig_filename, suffix, output_folder))
-
+print(time.time()-start_t)
 
 
 

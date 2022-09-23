@@ -12,4 +12,5 @@ param = {'ShotHeight': 619, # Total number of rows in camera image (including de
          'nr_pts_x' : 120,  # Number of points along each Qx
          'nr_pts_y' : 120,  # Number of points along each Qy
          'nr_pts_z' : 120,  # Number of points along each QZ
+         'chi_offset' : 0   #neccesary for the equations but typically zero
          }
