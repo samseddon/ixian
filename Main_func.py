@@ -6,6 +6,7 @@ from nexusformat import nexus
 from useful_functions import progress_bar,existential_check
 from Param_dict import param
 from equations import *
+from spot_dict import spot_dict
 
 def voxel_fill(i,j,attenuator,two_theta_range_new,omega,wavelength,two_theta_h_range,x_slope, x_intercept,y_slope,y_intercept,z_slope,z_intercept):
 
@@ -77,28 +78,28 @@ def voxel_fill(i,j,attenuator,two_theta_range_new,omega,wavelength,two_theta_h_r
 
     return q_3d, idx_grid
 
-def q_array_3d(Param_dict):
+def q_lim(spot_dict,scan_num):
+    if spot_dict[str(scan_num)] == '004':
+        qz_min = 2.9
+        qz_max = 3.1
+        delta_qz_range = qz_max - qz_min
+        qx_min = -0.05
+        qx_max = 0.05
+        delta_qx_range = qx_max - qx_min
+        qy_min = -0.08
+        qy_max = 0.08
+        delta_qy_range = qy_max - qy_min
+    return qz_min,qz_max,delta_qz_range,qx_min,qx_max,delta_qx_range,qy_min,qy_max,delta_qy_range 
 
-    nr_pts_x = Param_dict['nr_pts_x']
-    nr_pts_y = Param_dict['nr_pts_y']
-    nr_pts_z = Param_dict['nr_pts_z']
-    #if spot == '004':  # Symmetric reflection
+
+
+def q_array_3d(param_dict,spot_dict,scan_num):
+
+    nr_pts_x = param_dict['nr_pts_x']
+    nr_pts_y = param_dict['nr_pts_y']
+    nr_pts_z = param_dict['nr_pts_z']
     q_3d = np.zeros((nr_pts_x, nr_pts_y, nr_pts_z))
-
-    qz_min = 2.9
-
-    qz_max = 3.1
-    delta_qz_range = qz_max - qz_min
-
-    qx_min = -0.05
-    qx_max = 0.05
-
-    delta_qx_range = qx_max - qx_min
-
-    qy_min = -0.08
-
-    qy_max = 0.08
-    delta_qy_range = qy_max - qy_min
+    qz_min,qz_max,delta_qz_range,qx_min,qx_max,delta_qx_range,qy_min,qy_max,delta_qy_range=q_lim(spot_dict,scan_num) 
 
     ###################################################################
 
@@ -123,10 +124,11 @@ output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files
 files_location = os.listdir(directory)
 file_reference = "MAG001"
 scan_num = [152]
+#q_lim(spot_dict,scan_num)
 # Selecting the .edf files from a messy folder full of all Data scans, and then with the target scan numbers
 master_files = [m for m in files_location if m.startswith(file_reference) and m.endswith(".edf")]
 master_files = [c for c in master_files if int(c.split("_")[-2]) in scan_num]
-q_3d, x_slope, y_slope, z_slope, z_intercept, x_intercept, y_intercept, qx, qy, qz = q_array_3d(param)
+q_3d, x_slope, y_slope, z_slope, z_intercept, x_intercept, y_intercept, qx, qy, qz = q_array_3d(param,spot_dict,scan_num[0])
 idx_grid = index_grid(param)
 offset = 0
 start_t = time.time()
