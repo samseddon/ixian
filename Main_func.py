@@ -8,11 +8,10 @@ from Param_dict import param
 from equations import *
 from spot_dict import spot_dict
 
-def voxel_fill(i,j,attenuator,two_theta_range_new,omega,wavelength,two_theta_h_range,x_slope, x_intercept,y_slope,y_intercept,z_slope,z_intercept):
 
-    fqx = calc_qx(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
-    fqy = calc_qy(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
-    fqz = calc_qz(two_theta_range_new[j], omega, wavelength)
+
+def voxel_fill(fqx, fqy, fqz, i,j,attenuator,x_slope, x_intercept,y_slope,y_intercept,z_slope,z_intercept):
+
     if attenuator == 0:
 
         if int(fqx * x_slope + x_intercept) > number_x \
@@ -79,17 +78,17 @@ def voxel_fill(i,j,attenuator,two_theta_range_new,omega,wavelength,two_theta_h_r
     return q_3d, idx_grid
 
 def q_lim(spot_dict,scan_num):
-    if spot_dict[str(scan_num)] == '004':
-        qz_min = 2.9
-        qz_max = 3.1
-        delta_qz_range = qz_max - qz_min
-        qx_min = -0.05
-        qx_max = 0.05
-        delta_qx_range = qx_max - qx_min
-        qy_min = -0.08
-        qy_max = 0.08
-        delta_qy_range = qy_max - qy_min
-    return qz_min,qz_max,delta_qz_range,qx_min,qx_max,delta_qx_range,qy_min,qy_max,delta_qy_range 
+    import_var = "var_" + spot_dict[str(scan_num)]+'.txt'
+    if os.path.exists(import_var)==False:
+       raise(ValueError("you fucked it son")) 
+    with open(import_var,'r') as inf:
+        dict1 = eval(inf.read())
+    delta_qx_range = dict1['qx_max'] - dict1['qx_min']
+    delta_qy_range = dict1['qy_max'] - dict1['qy_min']
+    delta_qz_range = dict1['qz_max'] - dict1['qz_min']
+    return dict1['qz_min'],dict1['qz_max'],delta_qz_range,dict1['qx_min'],dict1['qx_max'],delta_qx_range,dict1['qy_min'],dict1['qy_max'],delta_qy_range
+    
+
 
 
 
@@ -163,7 +162,10 @@ for k in range(len(master_files)):
     f_new = (f_new / io) * 10 ** 6
     for i in range(f_new.shape[1]):
         for j in range(f_new.shape[0]):  # FIRST ITERATE THE ROWS A.K.A TWO THETA
-            q_3d,idx_grid = voxel_fill(i,j,attenuator,two_theta_range_new,omega,wavelength,two_theta_h_range,
+            fqx = calc_qx(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
+            fqy = calc_qy(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
+            fqz = calc_qz(two_theta_range_new[j], omega, wavelength)
+            q_3d,idx_grid = voxel_fill(fqx,fqy,fqz,i,j,attenuator,
                     x_slope, x_intercept,y_slope,y_intercept,z_slope,z_intercept)
 
     f.close()
