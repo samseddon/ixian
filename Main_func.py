@@ -181,13 +181,13 @@ def ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
     ##########################################
     return idx_grid, q_3d
 
-pool = mp.Pool(mp.cpu_count())
-[pool.apply(ixian,args=(k,directory, master_files,param,q_3d, x_slope, y_slope,z_slope, z_intercept, x_intercept, y_intercept,idx_grid)) for k in range(len(master_files))]
-pool.close()
+#pool = mp.Pool(mp.cpu_count())
+#[pool.apply(ixian,args=(k,directory, master_files,param,q_3d, x_slope, y_slope,z_slope, z_intercept, x_intercept, y_intercept,idx_grid)) for k in range(len(master_files))]
+#pool.close()
 #Parallel(n_jobs=2)(delayed(ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,z_slope, z_intercept, x_intercept, y_intercept,idx_grid)) for k in range(len(master_files)))
-#for k in range(len(master_files)):
-#    idx_grid, q_3d = ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
-#            z_slope, z_intercept, x_intercept, y_intercept,idx_grid)
+for k in range(len(master_files)):
+    idx_grid, q_3d = ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
+            z_slope, z_intercept, x_intercept, y_intercept,idx_grid)
 
 for i in range(idx_grid.shape[0]):
     for j in range(idx_grid.shape[1]):

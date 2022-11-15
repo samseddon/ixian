@@ -7,7 +7,9 @@ from scipy import interpolate
 
 
 def file_checker(s_num, s_ind, input_path):
+    print(os.path.join(input_path, str(s_num) + '*'))
     files = glob.glob(os.path.join(input_path, str(s_num) + '*'))
+    print(files)
     file_name = max(files, key=os.path.getctime)
     file_name = file_name[len(input_path):]
     if s_ind == -1:
