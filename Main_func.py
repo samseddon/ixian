@@ -4,11 +4,18 @@ import time
 import numpy as np
 from nexusformat import nexus
 from useful_functions import progress_bar,existential_check
-from Param_dict import param
+#from Param_dict import param
 from equations import *
 from spot_dict import spot_dict
 from joblib import Parallel, delayed
 import multiprocessing as mp 
+
+
+def sanity_check(f_new,omega, wavelength, two_theta_h_range, two_theta_range_new,
+        i,j,attenuator,x_slope, x_intercept,y_slope,y_intercept,z_slope,
+        z_intercept, number_x,number_y, number_z,io,sat_pix,average_qz):
+    average_qz.append(calc_qz(two_theta_range_new[j], omega, wavelength)-calc_qz(two_theta_range_new[j-1], omega, wavelength))
+    return average_qz
 
 def voxel_fill(f_new,omega, wavelength, two_theta_h_range, two_theta_range_new, 
         i,j,attenuator,x_slope, x_intercept,y_slope,y_intercept,z_slope,
@@ -82,7 +89,7 @@ def voxel_fill(f_new,omega, wavelength, two_theta_h_range, two_theta_range_new,
     return q_3d, idx_grid,i,j
 
 def q_lim(spot_dict,scan_num):
-    import_var = "var_" + spot_dict[str(scan_num)]+'.txt'
+    import_var = "qlim/var_" + spot_dict[str(scan_num)]+'.txt'
     if os.path.exists(import_var)==False:
        raise(ValueError("you fucked it son")) 
     with open(import_var,'r') as inf:
@@ -93,21 +100,25 @@ def q_lim(spot_dict,scan_num):
     return dict1['qz_min'],dict1['qz_max'],delta_qz_range,dict1['qx_min'],\
             dict1['qx_max'],delta_qx_range,dict1['qy_min'],dict1['qy_max'],delta_qy_range
     
+def param_read(spot_dict,scan_num):
+    import_var = "param/param_" + spot_dict[str(scan_num)]+'.txt'
+    if os.path.exists(import_var)==False:
+       raise(ValueError("Param_dict for spot non existant"))
+    with open(import_var,'r') as inf:
+        dict1 = eval(inf.read())
+    return dict1
 
 
 
 
 def q_array_3d(param_dict,spot_dict,scan_num):
-
     nr_pts_x = param_dict['nr_pts_x']
     nr_pts_y = param_dict['nr_pts_y']
     nr_pts_z = param_dict['nr_pts_z']
-    global q_3d
+
     q_3d = np.zeros((nr_pts_x, nr_pts_y, nr_pts_z))
-    qz_min,qz_max,delta_qz_range,qx_min,qx_max,delta_qx_range,qy_min,qy_max,delta_qy_range=q_lim(spot_dict,scan_num) 
-
     ###################################################################
-
+    qz_min,qz_max,delta_qz_range,qx_min,qx_max,delta_qx_range,qy_min,qy_max,delta_qy_range=q_lim(spot_dict,scan_num)
     z_slope = nr_pts_z / delta_qz_range  # has intercept
     z_intercept = -z_slope * qz_min
 
@@ -116,8 +127,9 @@ def q_array_3d(param_dict,spot_dict,scan_num):
 
     y_slope = nr_pts_y / delta_qy_range  # has intercept
     y_intercept = -y_slope * qy_min
-
+    #print(q_3d)
     fqz = np.linspace(qz_min, qz_min + delta_qz_range, nr_pts_z)
+    #print(fqz)
     fqx = np.linspace(qx_min, qx_min + delta_qx_range, nr_pts_x)
     fqy = np.linspace(qy_min, qy_min + delta_qy_range, nr_pts_y)
 
@@ -128,17 +140,19 @@ directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/data"
 output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/"
 files_location = os.listdir(directory)
 file_reference = "MAG001"
-scan_num = [152]
+scan_num = [180]
 #q_lim(spot_dict,scan_num)
 # Selecting the .edf files from a messy folder full of all Data scans, and then with the target scan numbers
 master_files = [m for m in files_location if m.startswith(file_reference) and m.endswith(".edf")]
 master_files = [c for c in master_files if int(c.split("_")[-2]) in scan_num]
+param = param_read(spot_dict,scan_num[0])
 q_3d, x_slope, y_slope, z_slope, z_intercept, x_intercept, y_intercept, qx, qy, qz = q_array_3d(param,spot_dict,scan_num[0])
 idx_grid = index_grid(param)
 offset = 0
 start_t = time.time()
+average_qz = []
 def ixian(k,directory, master_files,param,q_3d, x_slope, y_slope, 
-        z_slope, z_intercept, x_intercept, y_intercept, idx_grid):
+        z_slope, z_intercept, x_intercept, y_intercept, idx_grid,average_qz):
     f1 = fabio.open(os.path.join(directory, master_files[k]))
     f2 = f1
     #Stripping the header 
@@ -164,12 +178,16 @@ def ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
     omega = omega + omega_offset 
     f2,two_theta_range_new = dead_pixel(f2,param,two_theta_range)
 
-    f2 = (f2 / io) * 10 ** 6
+
     for i in range(f2.shape[1]):
         for j in range(f2.shape[0]):  # FIRST ITERATE THE ROWS A.K.A TWO THETA
             q_3d,idx_grid,i,j = voxel_fill(f2,omega, wavelength, two_theta_h_range,
                     two_theta_range_new,i,j,attenuator,x_slope, 
                     x_intercept,y_slope,y_intercept,z_slope,z_intercept,number_x,number_y,number_z,io,sat_pix)
+            average_qz = sanity_check(f2,omega, wavelength, two_theta_h_range,
+                    two_theta_range_new,i,j,attenuator,x_slope,
+                    x_intercept,y_slope,y_intercept,z_slope,z_intercept,number_x,number_y,number_z,io,sat_pix,
+                    average_qz)
 #    Parallel(n_jobs=2)(delayed(voxel_fill)(omega, wavelength, two_theta_h_range,
 #                     two_theta_range_new,i,j,attenuator,x_slope,
 #                     x_intercept,y_slope,y_intercept,z_slope,z_intercept) \
@@ -179,15 +197,15 @@ def ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
     ##########################################
     progress_bar(k+1,len(master_files),start_t)
     ##########################################
-    return idx_grid, q_3d
+    return idx_grid, q_3d, average_qz
 
 #pool = mp.Pool(mp.cpu_count())
 #[pool.apply(ixian,args=(k,directory, master_files,param,q_3d, x_slope, y_slope,z_slope, z_intercept, x_intercept, y_intercept,idx_grid)) for k in range(len(master_files))]
 #pool.close()
 #Parallel(n_jobs=2)(delayed(ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,z_slope, z_intercept, x_intercept, y_intercept,idx_grid)) for k in range(len(master_files)))
 for k in range(len(master_files)):
-    idx_grid, q_3d = ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
-            z_slope, z_intercept, x_intercept, y_intercept,idx_grid)
+    idx_grid, q_3d, average_qz = ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
+            z_slope, z_intercept, x_intercept, y_intercept,idx_grid,average_qz)
 
 for i in range(idx_grid.shape[0]):
     for j in range(idx_grid.shape[1]):
@@ -204,7 +222,6 @@ a = nexus.NXdata(signal=q_3d, axes=(qx, qy, qz), axes_names={'x': qx, 'y': qy, '
 orig_filename = str(scan_num[0])+'_3d_fill'
 suffix = '.nxs'
 a.save(existential_check(orig_filename, suffix, output_folder))
-print(time.time()-start_t)
 
 
 
