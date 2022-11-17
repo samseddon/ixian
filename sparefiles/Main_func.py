@@ -9,7 +9,7 @@ from equations import *
 from spot_dict import spot_dict
 from joblib import Parallel, delayed
 import multiprocessing as mp 
-
+import pickle
 
 def sanity_check(f_new,omega, wavelength, two_theta_h_range, two_theta_range_new,
         i,j,attenuator,x_slope, x_intercept,y_slope,y_intercept,z_slope,
@@ -19,7 +19,7 @@ def sanity_check(f_new,omega, wavelength, two_theta_h_range, two_theta_range_new
 
 def voxel_fill(f_new,omega, wavelength, two_theta_h_range, two_theta_range_new, 
         i,j,attenuator,x_slope, x_intercept,y_slope,y_intercept,z_slope,
-        z_intercept, number_x,number_y, number_z,io,sat_pix):
+        z_intercept, q_3d, idx_grid, number_x,number_y, number_z,io,sat_pix):
     fqx = calc_qx(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
     fqy = calc_qy(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
     fqz = calc_qz(two_theta_range_new[j], omega, wavelength)
@@ -127,7 +127,6 @@ def q_array_3d(param_dict,spot_dict,scan_num):
 
     y_slope = nr_pts_y / delta_qy_range  # has intercept
     y_intercept = -y_slope * qy_min
-    #print(q_3d)
     fqz = np.linspace(qz_min, qz_min + delta_qz_range, nr_pts_z)
     #print(fqz)
     fqx = np.linspace(qx_min, qx_min + delta_qx_range, nr_pts_x)
@@ -135,24 +134,8 @@ def q_array_3d(param_dict,spot_dict,scan_num):
 
     return q_3d, x_slope, y_slope, z_slope, z_intercept, x_intercept, y_intercept, fqx, fqy, fqz
 
-#print(param)
-directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/data"
-output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/"
-files_location = os.listdir(directory)
-file_reference = "MAG001"
-scan_num = [180]
-#q_lim(spot_dict,scan_num)
-# Selecting the .edf files from a messy folder full of all Data scans, and then with the target scan numbers
-master_files = [m for m in files_location if m.startswith(file_reference) and m.endswith(".edf")]
-master_files = [c for c in master_files if int(c.split("_")[-2]) in scan_num]
-param = param_read(spot_dict,scan_num[0])
-q_3d, x_slope, y_slope, z_slope, z_intercept, x_intercept, y_intercept, qx, qy, qz = q_array_3d(param,spot_dict,scan_num[0])
-idx_grid = index_grid(param)
-offset = 0
-start_t = time.time()
-average_qz = []
 def ixian(k,directory, master_files,param,q_3d, x_slope, y_slope, 
-        z_slope, z_intercept, x_intercept, y_intercept, idx_grid,average_qz):
+        z_slope, z_intercept, x_intercept, y_intercept, idx_grid,average_qz,start_t):
     f1 = fabio.open(os.path.join(directory, master_files[k]))
     f2 = f1
     #Stripping the header 
@@ -183,15 +166,11 @@ def ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
         for j in range(f2.shape[0]):  # FIRST ITERATE THE ROWS A.K.A TWO THETA
             q_3d,idx_grid,i,j = voxel_fill(f2,omega, wavelength, two_theta_h_range,
                     two_theta_range_new,i,j,attenuator,x_slope, 
-                    x_intercept,y_slope,y_intercept,z_slope,z_intercept,number_x,number_y,number_z,io,sat_pix)
-            average_qz = sanity_check(f2,omega, wavelength, two_theta_h_range,
-                    two_theta_range_new,i,j,attenuator,x_slope,
-                    x_intercept,y_slope,y_intercept,z_slope,z_intercept,number_x,number_y,number_z,io,sat_pix,
-                    average_qz)
-#    Parallel(n_jobs=2)(delayed(voxel_fill)(omega, wavelength, two_theta_h_range,
-#                     two_theta_range_new,i,j,attenuator,x_slope,
-#                     x_intercept,y_slope,y_intercept,z_slope,z_intercept) \
-#                             for i in range(f_new.shape[1]) for j in range(f_new.shape[0]))
+                    x_intercept,y_slope,y_intercept,z_slope,z_intercept,q_3d, idx_grid,number_x,number_y,number_z,io,sat_pix)
+#            average_qz = sanity_check(f2,omega, wavelength, two_theta_h_range,
+#                    two_theta_range_new,i,j,attenuator,x_slope,
+#                    x_intercept,y_slope,y_intercept,z_slope,z_intercept,number_x,number_y,number_z,io,sat_pix,
+#                    average_qz)
     f1.close()
 
     ##########################################
@@ -199,30 +178,51 @@ def ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
     ##########################################
     return idx_grid, q_3d, average_qz
 
-#pool = mp.Pool(mp.cpu_count())
-#[pool.apply(ixian,args=(k,directory, master_files,param,q_3d, x_slope, y_slope,z_slope, z_intercept, x_intercept, y_intercept,idx_grid)) for k in range(len(master_files))]
-#pool.close()
-#Parallel(n_jobs=2)(delayed(ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,z_slope, z_intercept, x_intercept, y_intercept,idx_grid)) for k in range(len(master_files)))
-for k in range(len(master_files)):
-    idx_grid, q_3d, average_qz = ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
-            z_slope, z_intercept, x_intercept, y_intercept,idx_grid,average_qz)
+def data_fill(directory,output_folder,file_reference,scan_num):
+    files_location = os.listdir(directory)
+    master_files = [m for m in files_location if m.startswith(file_reference) and m.endswith(".edf")]
+    master_files = [c for c in master_files if int(c.split("_")[-2]) in scan_num]
+    param = param_read(spot_dict,scan_num[0])
+    q_3d, x_slope, y_slope, z_slope, z_intercept, x_intercept, y_intercept, qx, qy, qz = q_array_3d(param,
+            spot_dict,scan_num[0])
+    idx_grid = index_grid(param)
+    offset = 0
+    start_t = time.time()
+    average_qz = []
+    
+    for k in range(len(master_files)):
+        idx_grid, q_3d, average_qz = ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
+                z_slope, z_intercept, x_intercept, y_intercept,idx_grid,average_qz,start_t)
+    
+    for i in range(idx_grid.shape[0]):
+        for j in range(idx_grid.shape[1]):
+            for k in range(idx_grid.shape[2]):
+                if idx_grid[i, j, k] == 0:
+                    pass
+                else:
+                    q_3d[i, j, k] = q_3d[i, j, k] / idx_grid[i, j, k]
+    
+    
+    #q_3d = nexus.NXfield(q_3d,'Counts')
+    #q_3d.NXaxes = [qx, qy, qz]
+    #a = nexus.NXdata(signal=q_3d, axes=(qx, qy, qz), axes_names={'x': qx, 'y': qy, 'z': qz})
+    orig_filename = str(scan_num[0])+'_3d_fill'
+    #suffix = '.nxs'
+    #a.save(existential_check(orig_filename, suffix, output_folder))
+    suffix = '.pickle'
+    axis_export = []
+    axis_export.append(qx)
+    axis_export.append(qy)
+    axis_export.append(qz)
+    with open(existential_check(orig_filename, suffix, output_folder), 'wb') as handle:
+        pickle.dump(q_3d, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(existential_check(orig_filename, suffix, output_folder), 'wb') as handle:
+        pickle.dump(q_3d, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-for i in range(idx_grid.shape[0]):
-    for j in range(idx_grid.shape[1]):
-        for k in range(idx_grid.shape[2]):
-            if idx_grid[i, j, k] == 0:
-                pass
-            else:
-                q_3d[i, j, k] = q_3d[i, j, k] / idx_grid[i, j, k]
+directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/data"
+output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/"
+file_reference = "MAG001"
+scan_num = [180]
 
-
-q_3d = nexus.NXfield(q_3d,'Counts')
-q_3d.NXaxes = [qx, qy, qz]
-a = nexus.NXdata(signal=q_3d, axes=(qx, qy, qz), axes_names={'x': qx, 'y': qy, 'z': qz})
-orig_filename = str(scan_num[0])+'_3d_fill'
-suffix = '.nxs'
-a.save(existential_check(orig_filename, suffix, output_folder))
-
-
-
+data_fill(directory,output_folder,file_reference,scan_num)
 
