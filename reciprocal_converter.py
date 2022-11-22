@@ -6,7 +6,6 @@ from nexusformat import nexus
 from useful_functions import progress_bar,existential_check
 #from Param_dict import param
 from equations import *
-from spot_dict import spot_dict
 from joblib import Parallel, delayed
 import multiprocessing as mp 
 import pickle
@@ -184,6 +183,9 @@ def data_fill(directory,output_folder,file_reference,scan_num):
     files_location = os.listdir(directory)
     master_files = [m for m in files_location if m.startswith(file_reference) and m.endswith(".edf")]
     master_files = [c for c in master_files if int(c.split("_")[-2]) in scan_num]
+    with open(directory[:-4]+'user_defined_parameters/spot_dict.txt','r') as inf:
+        spot_dict = eval(inf.read())
+    print(spot_dict)
     param = param_read(spot_dict,scan_num[0],directory)
     q_3d, x_slope, y_slope, z_slope, z_intercept, x_intercept, y_intercept, qx, qy, qz = q_array_3d(param,
             spot_dict,scan_num[0],directory)
