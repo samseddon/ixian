@@ -88,7 +88,7 @@ def voxel_fill(f_new,omega, wavelength, two_theta_h_range, two_theta_range_new,
     return q_3d, idx_grid,i,j
 
 def q_lim(spot_dict,scan_num):
-    import_var = "qlim/qlim_" + spot_dict[str(scan_num)]+'.txt'
+    import_var = "user_defined_parameters/qlim/qlim_" + spot_dict[str(scan_num)]+'.txt'
     if os.path.exists(import_var)==False:
        raise(ValueError("qlim file does not exist"))
     with open(import_var,'r') as inf:
@@ -101,7 +101,7 @@ def q_lim(spot_dict,scan_num):
 
 
 def param_read(spot_dict,scan_num):
-    import_var = "param/param_" + spot_dict[str(scan_num)]+'.txt'
+    import_var = "user_defined_parameters/param/param_" + spot_dict[str(scan_num)]+'.txt'
     if os.path.exists(import_var)==False:
        raise(ValueError("Param_dict for spot non-existant"))
     with open(import_var,'r') as inf:
@@ -134,7 +134,7 @@ def q_array_3d(param_dict,spot_dict,scan_num):
 
 
 def ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
-        z_slope, z_intercept, x_intercept, y_intercept, idx_grid,average_qz,start_t):
+        z_slope, z_intercept, x_intercept, y_intercept, idx_grid,average_qz,start_t,temp,mag):
     f1 = fabio.open(os.path.join(directory, master_files[k]))
     f2 = f1
     #Stripping the header 
@@ -145,6 +145,8 @@ def ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
     omega = float(f2.header.get("motor_pos").split(" ")[1])  # OMEGA VALUE
     # chi = float(f.header.get("motor_pos").split(" ")[2])  # CHI VALUE
     phi = float(f2.header.get("motor_pos").split(" ")[3])  # PHI VALUE
+    temp.append(float(f2.header.get("counter_pos").split(" ")[35]))
+    mag.append(float(f2.header.get("motor_pos").split(" ")[88]))
     wavelength = param['wavelength']
     sat_pix =  param['sat_pix']
     number_x = param['nr_pts_x']-1
@@ -175,7 +177,7 @@ def ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
     ##########################################
     progress_bar(k+1,len(master_files),start_t)
     ##########################################
-    return idx_grid, q_3d, average_qz
+    return idx_grid, q_3d, average_qz, temp, mag
 
 
 def data_fill(directory,output_folder,file_reference,scan_num):
@@ -189,10 +191,12 @@ def data_fill(directory,output_folder,file_reference,scan_num):
     offset = 0
     start_t = time.time()
     average_qz = []
+    temp= []
+    mag = []
 
     for k in range(len(master_files)):
-        idx_grid, q_3d, average_qz = ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
-                z_slope, z_intercept, x_intercept, y_intercept,idx_grid,average_qz,start_t)
+        idx_grid, q_3d, average_qz, temp, mag = ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
+                z_slope, z_intercept, x_intercept, y_intercept,idx_grid,average_qz,start_t,temp,mag)
 
     for i in range(idx_grid.shape[0]):
         for j in range(idx_grid.shape[1]):
@@ -210,8 +214,8 @@ def data_fill(directory,output_folder,file_reference,scan_num):
     #suffix = '.nxs'
     #a.save(existential_check(orig_filename, suffix, output_folder))
     suffix = '.pickle'
-    export = {'qx':qx, 'qy':qy,'qz':qz,'data':q_3d}
+    export = {'qx':qx, 'qy':qy,'qz':qz,'temp':temp, 'mag':mag,'data':q_3d}
 
     with open(existential_check(orig_filename, suffix, output_folder), 'wb') as handle:
-        pickle.dump(q_3d, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(export, handle, protocol=pickle.HIGHEST_PROTOCOL)
 

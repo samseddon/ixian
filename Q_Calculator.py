@@ -2,6 +2,7 @@ from equations import calc_qx, calc_qy, calc_qz
 import os
 import fabio
 import numpy as np
+from spot_dict import spot_dict
 
 # THESE PARAMETERS ARE IN THE FUNCTION AS THE NAMES LISTED
 Directory = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/data"
@@ -52,6 +53,7 @@ qy2 = calc_qy(two_theta, theta2, Wavelength, y_angle)
 qz1 = calc_qz(two_theta, theta1, Wavelength)
 qz2 = calc_qz(two_theta, theta2, Wavelength)
 
+print('Scan', scan_num[0], 'is of spot', spot_dict[str(scan_num[0])])
 print('Qx mean is', (qx1+qx2)/2, 'with range', abs(qx2-qx1))
 print('Qy mean is', (qy1+qy2)/2, 'with range', abs(qy2-qy1))
 print('Qz mean is', (qz1+qz2)/2, 'with range', abs(qz2-qz1))

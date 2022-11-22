@@ -17,28 +17,33 @@ def existential_check(o_f, f_s, folder): #file name, file suffix, destination fo
 #    pickle.dump(your_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 # Load data (deserialize)
-with open('180_3d_fill_1.pickle', 'rb') as handle:
-    data = pickle.load(handle)
+with open('Comparison/182_3d_fill_5.pickle', 'rb') as handle:
+    data_work = pickle.load(handle)
+    
+with open('Comparison/180_3d_fill_3.pickle', 'rb') as handle:
+    data_not_work = pickle.load(handle)
 
-qx = []
-qy = []
-qz = []
-
-for i in range(40):
-    qx.append(i)
-    qy.append(i)
-    qz.append(i)
-qaxes = []
-qaxes.append(qx)
-qaxes.append(qy)
-qaxes.append(qz)
+print(data_not_work)
+print(data_work)
+#qx = []
+#qy = []
+#qz = []
 #
-#with open('file.txt', 'w') as file:
-#     file.write(str(your_data))
-export = {'qx':qx, 'qy':qy,'qz':qz,'data':data}
-orig_filename = '182_3d_fill'
-suffix = '.pickle'
-output_folder = ''
-with open(existential_check(orig_filename,suffix,output_folder), 'wb') as handle:
-    pickle.dump(export, handle, protocol=pickle.HIGHEST_PROTOCOL)
+#for i in range(40):
+#    qx.append(i)
+#    qy.append(i)
+#    qz.append(i)
+#qaxes = []
+#qaxes.append(qx)
+#qaxes.append(qy)
+#qaxes.append(qz)
+##
+##with open('file.txt', 'w') as file:
+##     file.write(str(your_data))
+#export = {'qx':qx, 'qy':qy,'qz':qz,'data':data}
+#orig_filename = '182_3d_fill'
+#suffix = '.pickle'
+#output_folder = ''
+#with open(existential_check(orig_filename,suffix,output_folder), 'wb') as handle:
+#    pickle.dump(export, handle, protocol=pickle.HIGHEST_PROTOCOL)
 

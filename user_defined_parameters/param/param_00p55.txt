@@ -9,7 +9,7 @@
          'Zero_Pixel_Ver' : 307, # Vertical Pixel corresponding to "zero" for the experiment
          'wavelength' : 1.0,
          'nr_pts_x' : 40,  # Number of points along each Qx
-         'nr_pts_y' : 40,  # Number of points along each Qy
+         'nr_pts_y' : 45,  # Number of points along each Qy
          'nr_pts_z' : 40,  # Number of points along each QZ
          'chi_offset' : 0   #neccesary for the equations but typically zero
          }
