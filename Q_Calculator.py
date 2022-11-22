@@ -2,17 +2,17 @@ from equations import calc_qx, calc_qy, calc_qz
 import os
 import fabio
 import numpy as np
-from spot_dict import spot_dict
 
 # THESE PARAMETERS ARE IN THE FUNCTION AS THE NAMES LISTED
-Directory = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/data"
+directory = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/data"
 FileStart = "MAG001"
-scan_num = [152]
+scan_num = [303]
 # -----------------------------------------------------------
-
+with open(directory[:-4]+'user_defined_parameters/spot_dict.txt','r') as inf:
+        spot_dict = eval(inf.read())
 
 # Make a list of all files in the target directory
-files = os.listdir(Directory)
+files = os.listdir(directory)
 
 # Filter it down to only master files
 master_files = [m for m in files if m.startswith(FileStart) and m.endswith(".edf")]
@@ -24,7 +24,7 @@ omega = []
 phi = []
 
 for f in scan_masters[:]:
-    f = fabio.open(os.path.join(Directory, f)) 
+    f = fabio.open(os.path.join(directory, f)) 
     two_theta.append(float(f.header.get("motor_pos").split(" ")[0]))# TWO THETA VALUE
     omega.append(float(f.header.get("motor_pos").split(" ")[1])) # OMEGA VALUE
     # chi = float(f.header.get("motor_pos").split(" ")[2])  # CHI VALUE
