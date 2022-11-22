@@ -87,8 +87,8 @@ def voxel_fill(f_new,omega, wavelength, two_theta_h_range, two_theta_range_new,
 
     return q_3d, idx_grid,i,j
 
-def q_lim(spot_dict,scan_num):
-    import_var = "user_defined_parameters/qlim/qlim_" + spot_dict[str(scan_num)]+'.txt'
+def q_lim(spot_dict,scan_num,directory):
+    import_var = directory[:-4] + "user_defined_parameters/qlim/qlim_" + spot_dict[str(scan_num)]+'.txt'
     if os.path.exists(import_var)==False:
        raise(ValueError("qlim file does not exist"))
     with open(import_var,'r') as inf:
@@ -100,8 +100,8 @@ def q_lim(spot_dict,scan_num):
             dict1['qx_max'],delta_qx_range,dict1['qy_min'],dict1['qy_max'],delta_qy_range
 
 
-def param_read(spot_dict,scan_num):
-    import_var = "user_defined_parameters/param/param_" + spot_dict[str(scan_num)]+'.txt'
+def param_read(spot_dict,scan_num,directory):
+    import_var = directory[:-4] + "user_defined_parameters/param/param_" + spot_dict[str(scan_num)]+'.txt'
     if os.path.exists(import_var)==False:
        raise(ValueError("Param_dict for spot non-existant"))
     with open(import_var,'r') as inf:
@@ -109,14 +109,14 @@ def param_read(spot_dict,scan_num):
     return dict1
 
 
-def q_array_3d(param_dict,spot_dict,scan_num):
+def q_array_3d(param_dict,spot_dict,scan_num,directory):
     nr_pts_x = param_dict['nr_pts_x']
     nr_pts_y = param_dict['nr_pts_y']
     nr_pts_z = param_dict['nr_pts_z']
 
     q_3d = np.zeros((nr_pts_x, nr_pts_y, nr_pts_z))
     ###################################################################
-    qz_min,qz_max,delta_qz_range,qx_min,qx_max,delta_qx_range,qy_min,qy_max,delta_qy_range=q_lim(spot_dict,scan_num)
+    qz_min,qz_max,delta_qz_range,qx_min,qx_max,delta_qx_range,qy_min,qy_max,delta_qy_range=q_lim(spot_dict,scan_num,directory)
     z_slope = nr_pts_z / delta_qz_range  # has intercept
     z_intercept = -z_slope * qz_min
 
@@ -184,9 +184,9 @@ def data_fill(directory,output_folder,file_reference,scan_num):
     files_location = os.listdir(directory)
     master_files = [m for m in files_location if m.startswith(file_reference) and m.endswith(".edf")]
     master_files = [c for c in master_files if int(c.split("_")[-2]) in scan_num]
-    param = param_read(spot_dict,scan_num[0])
+    param = param_read(spot_dict,scan_num[0],directory)
     q_3d, x_slope, y_slope, z_slope, z_intercept, x_intercept, y_intercept, qx, qy, qz = q_array_3d(param,
-            spot_dict,scan_num[0])
+            spot_dict,scan_num[0],directory)
     idx_grid = index_grid(param)
     offset = 0
     start_t = time.time()
