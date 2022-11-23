@@ -134,17 +134,17 @@ def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder):
 
 
 
-scan = [180]
-file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index
-axis_1 = 'qx'
-axis_2 = 'qy'
-axis_3_limits= [0,-1]
-axis_3_limits = [1,35]
-data_directory = '/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/'
-output_directory = '/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/images'
-
-
-f_1, f_name = file_checker(scan[0], file_index[0],data_directory)
-rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_directory)
+#scan = [180]
+#file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index
+#axis_1 = 'qx'
+#axis_2 = 'qy'
+#axis_3_limits= [0,-1]
+#axis_3_limits = [1,35]
+#data_directory = '/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/'
+#output_directory = '/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/images'
+#
+#
+#f_1, f_name = file_checker(scan[0], file_index[0],data_directory)
+#rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_directory)
 
 
