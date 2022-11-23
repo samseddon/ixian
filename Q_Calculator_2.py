@@ -32,7 +32,9 @@ for f in scan_masters[:]:
     phi.append(float(f.header.get("motor_pos").split(" ")[3]))
 print(phi)
 Wavelength = 1 
-two_theta = np.average(two_theta)
+#two_theta = np.average(two_theta)
+two_theta1 = min(two_theta)-3
+two_theta2 = max(two_theta)+3
 theta1 = min(omega)
 theta2 = max(omega)
 #theta1 = 20.2
@@ -49,36 +51,46 @@ else:
 #    omega_offset = 3.8765
 theta1 = theta1+omega_offset
 theta2 = theta2+omega_offset
+qzmaxleft = calc_qz(two_theta2,theta1,Wavelength)
+qzminleft = calc_qz(two_theta1,theta1,Wavelength)
+qzmaxright = calc_qz(two_theta2,theta2,Wavelength)
+qzminright = calc_qz(two_theta1,theta1,Wavelength)
+qzcentre = calc_qz(two_theta2, (theta1+theta2)/2,Wavelength)
 
-qx1 = calc_qx(two_theta, theta1, Wavelength, y_angle)
-qx2 = calc_qx(two_theta, theta2, Wavelength, y_angle)
-qy1 = calc_qy(two_theta, theta1, Wavelength, y_angle)
-qy2 = calc_qy(two_theta, theta2, Wavelength, y_angle)
-qz1 = calc_qz(two_theta, theta1, Wavelength)
-qz2 = calc_qz(two_theta, theta2, Wavelength)
+qxmaxleft = calc_qx(two_theta2,theta1,Wavelength, y_angle+2.5)
+qxminleft = calc_qx(two_theta1,theta1,Wavelength, y_angle+2.5)
+qxmaxright = calc_qx(two_theta2,theta2,Wavelength, y_angle+2.5)
+qxminright = calc_qx(two_theta1,theta2,Wavelength, y_angle+2.5)
 
-print('Scan', scan_num[0], 'is of spot', spot_dict[str(scan_num[0])])
-print('Qx lowlim is', (qx1+qx2)/2-abs(qx2-qx1), 'Qx highlim is', (qx1+qx2)/2+abs(qx2-qx1))
-print('Qy lowlim is', (qx1+qx2)/2-abs(qx2-qx1), 'Qy highlim is', (qy1+qy2)/2+abs(qx2-qx1))
-print('Qz lowlim is', (qz1+qz2)/2-abs(qz2-qz1), 'Qz highlim is', (qz1+qz2)/2+abs(qz2-qz1))
+qymin = calc_qy(two_theta2,theta1,Wavelength,y_angle-2.5)
+qymax = calc_qy(two_theta2,theta1,Wavelength,y_angle+2.5)
+
+
+qzmax = max(qzmaxleft,qzmaxright,qzcentre)
+qzmin = min(qzminleft,qzminright)
+qxmax = max(qxmaxright,qxmaxleft)
+qxmin = min(qxminright,qxminleft)
+
+qxave = (qxmax+qxmin)/2
+qyave = (qymax+qymin)/2
+qzave = (qzmax+qzmin)/2
+qxrange = abs(qxmax-qxmin)/2
+qyrange = abs(qymax-qymin)/2
+qzrange = abs(qzmax-qzmin)/2
 
 output = {
- 'qz_min' : (qz1+qz2)/2-abs(qz2-qz1),
- 'qz_max' : (qz1+qz2)/2+abs(qz2-qz1), 
- 'qx_min' : (qx1+qx2)/2-abs(qx2-qx1),
- 'qx_max' : (qx1+qx2)/2+abs(qx2-qx1),
- 'qy_min' : (qx1+qx2)/2-abs(qx2-qx1),
- 'qy_max' : (qx1+qx2)/2+abs(qx2-qx1)}
+ 'qz_min' : qzave-qzrange,
+ 'qz_max' : qzave+qzrange,
+ 'qx_min' : qxave-qxrange,
+ 'qx_max' : qxave+qxrange,
+ 'qy_min' : qyave-qyrange,
+ 'qy_max' : qyave+qyrange}
 
-filename = directory[:-4]+'user_defined_parameters/qlim/qlim_'+spot_dict[str(scan_num[0])]+'.txt' 
+filename = directory[:-4]+'user_defined_parameters/qlim/qlim_'+spot_dict[str(scan_num[0])]+'.txt'
 print('Created file',filename)
 if os.path.exists(filename) == True and input('Overwrite existing file, [y] or n?\n') != 'y':
         pass
 else:
    with open(filename,'w') as inf:
-      inf.write(str(output)) 
-
-
-
-
+      inf.write(str(output))
 
