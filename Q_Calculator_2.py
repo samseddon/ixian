@@ -30,7 +30,6 @@ for f in scan_masters[:]:
     omega.append(float(f.header.get("motor_pos").split(" ")[1])) # OMEGA VALUE
     # chi = float(f.header.get("motor_pos").split(" ")[2])  # CHI VALUE
     phi.append(float(f.header.get("motor_pos").split(" ")[3]))
-print(phi)
 Wavelength = 1 
 #two_theta = np.average(two_theta)
 two_theta1 = min(two_theta)-3
@@ -87,10 +86,10 @@ output = {
  'qy_max' : qyave+qyrange}
 
 filename = directory[:-4]+'user_defined_parameters/qlim/qlim_'+spot_dict[str(scan_num[0])]+'.txt'
-print('Created file',filename)
 if os.path.exists(filename) == True and input('Overwrite existing file, [y] or n?\n') != 'y':
         pass
 else:
    with open(filename,'w') as inf:
       inf.write(str(output))
+   print('Created file',filename)
 

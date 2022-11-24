@@ -9,9 +9,10 @@ from rsm_plot_pickle import file_checker,  rsm_plot
 directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/data"    
 output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/"
 file_reference = "MAG001"
-scan_num = [239]
+scan_num = [[240],[254]]
 
-data_fill(directory,output_folder,file_reference,scan_num)
+for i in range(len(scan_num)):
+    data_fill(directory,output_folder,file_reference,scan_num[i])
 #data_fill(directory,output_folder,file_reference,[199])
 
 file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index
