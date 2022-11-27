@@ -42,7 +42,7 @@ y_angle = 0
 if phi[-1] > - 50: 
     omega_offset = 1.6923
 else:
-        omega_offset = 3.8765
+    omega_offset = 3.8765
 
 #if phi == 0:
 #    omega_offset = 1.6923

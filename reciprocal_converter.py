@@ -10,7 +10,8 @@ import pickle
 def sanity_check(f_new,omega, wavelength, two_theta_h_range, two_theta_range_new,
         i,j,attenuator,x_slope, x_intercept,y_slope,y_intercept,z_slope,
         z_intercept, number_x,number_y, number_z,io,sat_pix,average_qz):
-    average_qz.append(calc_qz(two_theta_range_new[j], omega, wavelength)-calc_qz(two_theta_range_new[j-1], omega, wavelength))
+    if j != 0:
+        average_qz.append(calc_qz(two_theta_range_new[j], omega, wavelength)-calc_qz(two_theta_range_new[j-1], omega, wavelength))
     return average_qz
 
 def voxel_fill(f_new,omega, wavelength, two_theta_h_range, two_theta_range_new, 
@@ -89,6 +90,7 @@ def q_lim(spot_dict,scan_num,directory):
        raise(ValueError("qlim file does not exist"))
     with open(import_var,'r') as inf:
         dict1 = eval(inf.read())
+    print(import_var,dict1)
     delta_qx_range = dict1['qx_max'] - dict1['qx_min']
     delta_qy_range = dict1['qy_max'] - dict1['qy_min']
     delta_qz_range = dict1['qz_max'] - dict1['qz_min']
@@ -204,7 +206,7 @@ def data_fill(directory,output_folder,file_reference,scan_num):
                 else:
                     q_3d[i, j, k] = q_3d[i, j, k] / idx_grid[i, j, k]
 
-
+    #print(average_qz)
     #q_3d = nexus.NXfield(q_3d,'Counts')
     #q_3d.NXaxes = [qx, qy, qz]
     #a = nexus.NXdata(signal=q_3d, axes=(qx, qy, qz), axes_names={'x': qx, 'y': qy, 'z': qz})
