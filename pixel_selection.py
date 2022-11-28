@@ -7,6 +7,68 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+def q_lim(spot_dict,scan_num,directory):
+    import_var = directory[:-4] + "user_defined_parameters/qlim/qlim_" + spot_dict[str(scan_num[0])]+'.txt'
+    if os.path.exists(import_var)==False:
+       raise(ValueError("qlim file does not exist"))
+    with open(import_var,'r') as inf:
+        dict1 = eval(inf.read())
+    delta_qx_range = dict1['qx_max'] - dict1['qx_min']
+    delta_qy_range = dict1['qy_max'] - dict1['qy_min']
+    delta_qz_range = dict1['qz_max'] - dict1['qz_min']
+    return dict1,dict1['qz_min'],dict1['qz_max'],delta_qz_range,dict1['qx_min'],\
+            dict1['qx_max'],delta_qx_range,dict1['qy_min'],dict1['qy_max'],delta_qy_range
+
+
+def q_array_init(param, spot_dict,scan_num, directory):
+    nr_pts_x = param['nr_pts_x']
+    nr_pts_y = param['nr_pts_y']
+    nr_pts_z = param['nr_pts_z']
+    qlim_dict,qz_min,qz_max,delta_qz_range,qx_min,qx_max,delta_qx_range,qy_min,qy_max,delta_qy_range \
+        =q_lim(spot_dict,scan_num,directory)
+    dict1 = {}
+    dict1['q_data'] = np.zeros((nr_pts_x, nr_pts_y, nr_pts_z))
+    dict1['q_idx']  = np.zeros((nr_pts_x, nr_pts_y, nr_pts_z))  
+    dict1['q_x_axis'] = np.linspace(qx_min, qx_max, nr_pts_x)
+    dict1['q_y_axis'] = np.linspace(qy_min, qy_max, nr_pts_y)
+    dict1['q_z_axis'] = np.linspace(qz_min, qz_max, nr_pts_z)
+    
+    return dict1, dict1['q_x_axis'],dict1['q_y_axis'],dict1['q_z_axis'],qlim_dict
+
+def find_q_index(qx,qy,qz,q_x_fin,q_y_fin,q_z_fin,qlim_dict):
+    q_index_dict = {}
+    
+    if qx < qlim_dict['qx_min'] or qx > qlim_dict['qx_max'] \
+            or qy < qlim_dict['qy_min'] or qy > qlim_dict['qy_max'] \
+            or qz < qlim_dict['qz_min'] or qz > qlim_dict['qz_max']:
+                return(1)
+    else: 
+      #  print(qx, q_x_fin) 
+        for i_x in range(len(q_x_fin)):
+            if(qx > q_x_fin[i_x]):
+       
+                #print('i_x=',i_x) 
+                 pass
+
+            else:        
+              #  print('i_x=',i_x)
+                q_index_dict['i_x'] = i_x
+                break
+        for i_y in range(len(q_y_fin)):
+            if(qy > q_y_fin[i_y]):
+               # print('i_y=',i_y)
+                pass
+            else:        
+                q_index_dict['i_y'] = i_y
+                break
+        for i_z in range(len(q_z_fin)):
+            if(qz > q_z_fin[i_z]):
+                pass
+            else:        
+                q_index_dict['i_z'] = i_z
+                break
+        return q_index_dict
+
 
 def data_fill(directory,output_folder,file_reference,scan_num):
     files_location = os.listdir(directory)
@@ -17,10 +79,59 @@ def data_fill(directory,output_folder,file_reference,scan_num):
     mag = []
     with open(directory[:-4]+'user_defined_parameters/spot_dict.txt','r') as inf:
         spot_dict = eval(inf.read())
+    sam = 0
     param = param_read(spot_dict,scan_num[0],directory)
-#for k in range(len(master_files)):
-    for k in range(1):
-        pixel_segmenter(k,directory, master_files, param, start_t,temp,mag)
+    q_final,q_x_fin,q_y_fin,q_z_fin,qlim_dict = q_array_init(param, spot_dict, scan_num, directory)
+    q_unsorted = []
+    for k in range(len(master_files)):
+   # for k in range(1):
+    #    k = 140
+        q_unsorted.append(pixel_segmenter(k,directory, master_files, param, start_t,temp,mag))
+    print('q_unsorted compiled')
+    for k in range(len(q_unsorted)):
+        for i in range(np.shape(q_unsorted[k])[1]):
+            for j in range(np.shape(q_unsorted[k])[0]):
+                q_index_dict = find_q_index(q_unsorted[k][j][i]['qx'],\
+                        q_unsorted[k][j][i]['qy'],q_unsorted[k][j][i]['qz'],\
+                        q_x_fin,q_y_fin,q_z_fin,qlim_dict)
+               # print('i= ',i,'j = ',j)
+                if q_index_dict == 1:
+                    pass
+                else:
+         #           print(q_final['q_data'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x']])
+          #          print(q_unsorted[k][j][i]['data'])
+                    sam = sam+1
+                    q_final['q_data'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x']] =\
+                            q_unsorted[k][j][i]['data'] +\
+                            q_final['q_data'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x']]
+         #           print(q_final['q_data'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x']])        
+          #          print(q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x'])
+                    q_final['q_idx'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x']] =\
+                            1 + q_final['q_idx'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x']]
+    print("Duration: {}".format(time.time() - start_t))
+    for s in range(q_final['q_idx'].shape[0]):
+        for t in range(q_final['q_idx'].shape[1]):
+            for u in range(q_final['q_idx'].shape[2]):
+                if q_final['q_data'][s,t,u] == 0:
+                    pass
+                else:
+                    print(q_final['q_data'][s,t,u])
+#                if q_final['q_idx'][i, j, k] == 0:
+#                    pass
+#                else:
+#                    q_final['q_data'][i, j, k] = q_final['q_data'][i, j, k] / q_final['q_idx'][i, j, k]
+    print(sam)
+    orig_filename = str(scan_num[0])+'_new_3d_fill'
+    suffix = '.pickle'
+   # print(q_final['q_data'])
+
+    export = {  'qx':   q_final['q_x_axis'],\
+                'qy':   q_final['q_y_axis'],\
+                'qz':   q_final['q_z_axis'],\
+                'data': q_final['q_data']}
+    
+    with open(existential_check(orig_filename, suffix, output_folder), 'wb') as handle:
+        pickle.dump(export, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def param_read(spot_dict,scan_num,directory):
@@ -32,24 +143,51 @@ def param_read(spot_dict,scan_num,directory):
     return dict1
 
 
-def pixel_segmenter(k,directory, master_files,param,start_t,temp,mag):
-    '''This function gets given the relevant files, one at time and will eventually return an array of '''
-    f1 = fabio.open(os.path.join(directory, master_files[k]))
+'''This function strips the motor and counter positions, and spits them back as a dictionary 
+with the pnemonics '''
+def header_strip(f):
+    dict_count  = {}
+    dict_motor  = {} 
+    ub = np.array(f.header.get('UB_pos').split(' '))
+    count_mne   = f.header.get('counter_mne').split(' ')
+    count_pos   = f.header.get('counter_pos').split(' ')
+    motor_mne   = f.header.get('motor_mne').split(' ')
+    motor_pos   = f.header.get('motor_pos').split(' ')
+    ub          = ub.astype(float) 
+    for key in count_mne:
+        for value in count_pos:
+            dict_count[key] = value
+            count_pos.remove(value)
+            break
+    for key in motor_mne:
+        for value in motor_pos:
+            dict_motor[key] = value
+            motor_pos.remove(value)
+            break
+    return dict_count, dict_motor, ub
 
-    attenuator = float(f1.header.get("counter_pos").split(" ")[24])
-    trans = float(f1.header.get("counter_pos").split(" ")[23])
-    io = float(f1.header.get("counter_pos").split(" ")[6])
-    two_theta = float(f1.header.get("motor_pos").split(" ")[0])  # TWO THETA VALUE
-    omega = float(f1.header.get("motor_pos").split(" ")[1])  # OMEGA VALUE
-    chi = float(f1.header.get("motor_pos").split(" ")[2])  # CHI VALUE
-    phi = float(f1.header.get("motor_pos").split(" ")[3])  # PHI VALUE
-    temp.append(float(f1.header.get("counter_pos").split(" ")[35]))
-    mag.append(float(f1.header.get("motor_pos").split(" ")[88]))
-    wavelength = param['wavelength']
-    sat_pix =  param['sat_pix']
-    number_x = param['nr_pts_x']-1
-    number_y = param['nr_pts_y']-1
-    number_z = param['nr_pts_z']-1
+
+'''This function gets given the relevant files, one at time and will eventually return an array of '''
+def pixel_segmenter(k,directory, master_files,param,start_t,temp,mag):
+    f1 = fabio.open(os.path.join(directory, master_files[k]))
+    count_head, motor_head, ub = header_strip(f1) 
+ 
+    attn        =   float(count_head['attn'])
+    trans       =   float(count_head['trans'])
+    io          =   float(count_head['Io'])
+    temp.append(    float(count_head['temp_B']))
+
+    two_theta   =   float(motor_head['del'])
+    omega       =   float(motor_head['eta'])
+    chi         =   float(motor_head['chi'])   
+    phi         =   float(motor_head['phi'])   
+    mag.append(     float(motor_head['ami_mag']))
+
+    wavelength  =   param['wavelength']
+    number_x    =   param['nr_pts_x']-1
+    number_y    =   param['nr_pts_y']-1
+    number_z    =   param['nr_pts_z']-1
+    
     two_theta_range = np.array(generate_two_thetas(two_theta,param))
     two_theta_h_range = np.array(qy_angle(param))#
 
@@ -60,35 +198,33 @@ def pixel_segmenter(k,directory, master_files,param,start_t,temp,mag):
     omega = omega + omega_offset
     
     f_image,two_theta_range_new = dead_pixel(f1,param,two_theta_range)
-
     m,n = np.shape(f_image)
-#    f_image = []
-#    for i in range(n):
-#        f_image.append([])
-#    for i in range(m):
-#        for j in range(n):
+    '''These parameters need to be put into a param_004 file'''
     realx_lim_low = 200
     realx_lim_hig = 300
     realy_lim_low = 260
     realy_lim_hig = 330
+    
     f_cut = np.array(f_image)
     f_cut = f_cut[realy_lim_low:realy_lim_hig,realx_lim_low:realx_lim_hig]
-    f_cut_qx = np.zeros((np.shape(f_cut)[0],np.shape(f_cut)[1]))
-    f_cut_qy = np.zeros((np.shape(f_cut)[0],np.shape(f_cut)[1]))
-    f_cut_qz = np.zeros((np.shape(f_cut)[0],np.shape(f_cut)[1]))
-
+    array = []
     for i in range(np.shape(f_cut)[1]):
+        row = []
         for j in range(np.shape(f_cut)[0]):
-            f_cut_qx[j,i] = calc_qx(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
-            f_cut_qy[j,i] = calc_qy(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
-            f_cut_qz[j,i] = calc_qz(two_theta_range_new[j], omega, wavelength)
-    
+            dict1 = {}
+            dict1['data']=f_cut[j,i]
+            dict1['qx'] = calc_qx(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
+            dict1['qy'] = calc_qx(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
+            dict1['qz'] = calc_qz(two_theta_range_new[j], omega, wavelength)
+            row.append(dict1)
+        array.append(row)
+     
 #    fig = plt.figure(figsize = (5,5))
 #    ax = sns.heatmap(f_cut)
 #    plt.show()
-    print(f_cut_qx)    
-    print(f_cut_qy)    
-    print(f_cut_qz)    
+    return array
+
+
 directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/data"
 output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/"
 file_reference = "MAG001"

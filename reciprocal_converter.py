@@ -136,15 +136,15 @@ def ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
     f1 = fabio.open(os.path.join(directory, master_files[k]))
     f2 = f1
     #Stripping the header 
-    attenuator = float(f2.header.get("counter_pos").split(" ")[24])
-    trans = float(f2.header.get("counter_pos").split(" ")[23])
-    io = float(f2.header.get("counter_pos").split(" ")[6])
-    two_theta = float(f2.header.get("motor_pos").split(" ")[0])  # TWO THETA VALUE
-    omega = float(f2.header.get("motor_pos").split(" ")[1])  # OMEGA VALUE
-    # chi = float(f.header.get("motor_pos").split(" ")[2])  # CHI VALUE
-    phi = float(f2.header.get("motor_pos").split(" ")[3])  # PHI VALUE
-    temp.append(float(f2.header.get("counter_pos").split(" ")[35]))
-    mag.append(float(f2.header.get("motor_pos").split(" ")[88]))
+    attenuator = float(f1.header.get("counter_pos").split(" ")[24])
+    trans = float(f1.header.get("counter_pos").split(" ")[23])
+    io = float(f1.header.get("counter_pos").split(" ")[6])
+    two_theta = float(f1.header.get("motor_pos").split(" ")[0])  # TWO THETA VALUE
+    omega = float(f1.header.get("motor_pos").split(" ")[1])  # OMEGA VALUE
+    # chi = float(f1.header.get("motor_pos").split(" ")[2])  # CHI VALUE
+    phi = float(f1.header.get("motor_pos").split(" ")[3])  # PHI VALUE
+    temp.append(float(f1.header.get("counter_pos").split(" ")[35]))
+    mag.append(float(f1.header.get("motor_pos").split(" ")[88]))
     wavelength = param['wavelength']
     sat_pix =  param['sat_pix']
     number_x = param['nr_pts_x']-1
@@ -158,7 +158,7 @@ def ixian(k,directory, master_files,param,q_3d, x_slope, y_slope,
     else:
         omega_offset = 3.8765
     omega = omega + omega_offset
-    f2,two_theta_range_new = dead_pixel(f2,param,two_theta_range)
+    f1,two_theta_range_new = dead_pixel(f2,param,two_theta_range)
 
 
     for i in range(f2.shape[1]):

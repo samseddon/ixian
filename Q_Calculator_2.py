@@ -32,6 +32,7 @@ for f in scan_masters[:]:
     phi.append(float(f.header.get("motor_pos").split(" ")[3]))
 Wavelength = 1 
 #two_theta = np.average(two_theta)
+print(two_theta)
 two_theta1 = min(two_theta)-3
 two_theta2 = max(two_theta)+3
 theta1 = min(omega)
