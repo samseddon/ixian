@@ -13,25 +13,23 @@ def q_lim(spot_dict,scan_num,directory):
        raise(ValueError("qlim file does not exist"))
     with open(import_var,'r') as inf:
         dict1 = eval(inf.read())
-    delta_qx_range = dict1['qx_max'] - dict1['qx_min']
-    delta_qy_range = dict1['qy_max'] - dict1['qy_min']
-    delta_qz_range = dict1['qz_max'] - dict1['qz_min']
-    return dict1,dict1['qz_min'],dict1['qz_max'],delta_qz_range,dict1['qx_min'],\
-            dict1['qx_max'],delta_qx_range,dict1['qy_min'],dict1['qy_max'],delta_qy_range
+    return dict1
+            
 
 
 def q_array_init(param, spot_dict,scan_num, directory):
     nr_pts_x = param['nr_pts_x']
     nr_pts_y = param['nr_pts_y']
     nr_pts_z = param['nr_pts_z']
-    qlim_dict,qz_min,qz_max,delta_qz_range,qx_min,qx_max,delta_qx_range,qy_min,qy_max,delta_qy_range \
-        =q_lim(spot_dict,scan_num,directory)
+
+    qlim_dict = q_lim(spot_dict,scan_num,directory)
+    
     dict1 = {}
     dict1['q_data'] = np.zeros((nr_pts_x, nr_pts_y, nr_pts_z))
     dict1['q_idx']  = np.zeros((nr_pts_x, nr_pts_y, nr_pts_z))  
-    dict1['q_x_axis'] = np.linspace(qx_min, qx_max, nr_pts_x)
-    dict1['q_y_axis'] = np.linspace(qy_min, qy_max, nr_pts_y)
-    dict1['q_z_axis'] = np.linspace(qz_min, qz_max, nr_pts_z)
+    dict1['q_x_axis'] = np.linspace(qlim_dict['qx_min'], qlim_dict['qx_max'], nr_pts_x)
+    dict1['q_y_axis'] = np.linspace(qlim_dict['qy_min'], qlim_dict['qy_max'], nr_pts_y)
+    dict1['q_z_axis'] = np.linspace(qlim_dict['qz_min'], qlim_dict['qz_max'], nr_pts_z)
     
     return dict1, dict1['q_x_axis'],dict1['q_y_axis'],dict1['q_z_axis'],qlim_dict
 
@@ -43,20 +41,14 @@ def find_q_index(qx,qy,qz,q_x_fin,q_y_fin,q_z_fin,qlim_dict):
             or qz < qlim_dict['qz_min'] or qz > qlim_dict['qz_max']:
                 return(1)
     else: 
-      #  print(qx, q_x_fin) 
         for i_x in range(len(q_x_fin)):
             if(qx > q_x_fin[i_x]):
-       
-                #print('i_x=',i_x) 
                  pass
-
             else:        
-              #  print('i_x=',i_x)
                 q_index_dict['i_x'] = i_x
                 break
         for i_y in range(len(q_y_fin)):
             if(qy > q_y_fin[i_y]):
-               # print('i_y=',i_y)
                 pass
             else:        
                 q_index_dict['i_y'] = i_y
@@ -79,52 +71,43 @@ def data_fill(directory,output_folder,file_reference,scan_num):
     mag = []
     with open(directory[:-4]+'user_defined_parameters/spot_dict.txt','r') as inf:
         spot_dict = eval(inf.read())
-    sam = 0
     param = param_read(spot_dict,scan_num[0],directory)
     q_final,q_x_fin,q_y_fin,q_z_fin,qlim_dict = q_array_init(param, spot_dict, scan_num, directory)
+
+    print('\nSlicing images and calulating pixel Q values..')
     q_unsorted = []
     for k in range(len(master_files)):
-   # for k in range(1):
-    #    k = 140
         q_unsorted.append(pixel_segmenter(k,directory, master_files, param, start_t,temp,mag))
-    print('q_unsorted compiled')
+        progress_bar(k+1,len(master_files),start_t)
+    new_start_t = time.time()
+    print('Inserting pixels into Q_voxels')
     for k in range(len(q_unsorted)):
         for i in range(np.shape(q_unsorted[k])[1]):
             for j in range(np.shape(q_unsorted[k])[0]):
                 q_index_dict = find_q_index(q_unsorted[k][j][i]['qx'],\
                         q_unsorted[k][j][i]['qy'],q_unsorted[k][j][i]['qz'],\
                         q_x_fin,q_y_fin,q_z_fin,qlim_dict)
-               # print('i= ',i,'j = ',j)
                 if q_index_dict == 1:
                     pass
                 else:
-         #           print(q_final['q_data'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x']])
-          #          print(q_unsorted[k][j][i]['data'])
-                    sam = sam+1
-                    q_final['q_data'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x']] =\
+                    q_final['q_data'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_z']] =\
                             q_unsorted[k][j][i]['data'] +\
-                            q_final['q_data'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x']]
-         #           print(q_final['q_data'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x']])        
-          #          print(q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x'])
-                    q_final['q_idx'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x']] =\
-                            1 + q_final['q_idx'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_x']]
-    print("Duration: {}".format(time.time() - start_t))
+                            q_final['q_data'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_z']]
+                    q_final['q_idx'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_z']] =\
+                            1 + q_final['q_idx'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_z']]
+        progress_bar(k+1,len(master_files),new_start_t)
+
     for s in range(q_final['q_idx'].shape[0]):
         for t in range(q_final['q_idx'].shape[1]):
             for u in range(q_final['q_idx'].shape[2]):
-                if q_final['q_data'][s,t,u] == 0:
+                if q_final['q_idx'][s, t, u] == 0:
                     pass
                 else:
-                    print(q_final['q_data'][s,t,u])
-#                if q_final['q_idx'][i, j, k] == 0:
-#                    pass
-#                else:
-#                    q_final['q_data'][i, j, k] = q_final['q_data'][i, j, k] / q_final['q_idx'][i, j, k]
-    print(sam)
+                    q_final['q_data'][s, t, u] = q_final['q_data'][s, t, u] / q_final['q_idx'][s, t, u]
+
+
     orig_filename = str(scan_num[0])+'_new_3d_fill'
     suffix = '.pickle'
-   # print(q_final['q_data'])
-
     export = {  'qx':   q_final['q_x_axis'],\
                 'qy':   q_final['q_y_axis'],\
                 'qz':   q_final['q_z_axis'],\
@@ -132,7 +115,7 @@ def data_fill(directory,output_folder,file_reference,scan_num):
     
     with open(existential_check(orig_filename, suffix, output_folder), 'wb') as handle:
         pickle.dump(export, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
+    print("Complete, total duration: {}".format(int(time.time() - start_t))+ ' seconds')
 
 def param_read(spot_dict,scan_num,directory):
     import_var = directory[:-4] + "user_defined_parameters/param/param_" + spot_dict[str(scan_num)]+'.txt'
@@ -197,16 +180,17 @@ def pixel_segmenter(k,directory, master_files,param,start_t,temp,mag):
         omega_offset = 3.8765
     omega = omega + omega_offset
     
-    f_image,two_theta_range_new = dead_pixel(f1,param,two_theta_range)
-    m,n = np.shape(f_image)
     '''These parameters need to be put into a param_004 file'''
     realx_lim_low = 200
     realx_lim_hig = 300
     realy_lim_low = 260
     realy_lim_hig = 330
+
+    f_cut,two_theta_range_new, two_theta_h_range = dead_pixel(f1,param,two_theta_range,\
+            two_theta_h_range, realx_lim_low,realx_lim_hig,realy_lim_low,realy_lim_hig)
     
-    f_cut = np.array(f_image)
-    f_cut = f_cut[realy_lim_low:realy_lim_hig,realx_lim_low:realx_lim_hig]
+    #f_cut = np.array(f_image)
+    #f_cut = f_cut[realy_lim_low:realy_lim_hig,realx_lim_low:realx_lim_hig]
     array = []
     for i in range(np.shape(f_cut)[1]):
         row = []
@@ -214,14 +198,16 @@ def pixel_segmenter(k,directory, master_files,param,start_t,temp,mag):
             dict1 = {}
             dict1['data']=f_cut[j,i]
             dict1['qx'] = calc_qx(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
-            dict1['qy'] = calc_qx(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
+            dict1['qy'] = calc_qy(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
             dict1['qz'] = calc_qz(two_theta_range_new[j], omega, wavelength)
+           # print(i,j,dict1['qx'],dicty['qy'])
             row.append(dict1)
         array.append(row)
-     
+    #print(array)
 #    fig = plt.figure(figsize = (5,5))
-#    ax = sns.heatmap(f_cut)
+#    ax = sns.heatmap(array['data'])
 #    plt.show()
+    f1.close()
     return array
 
 
@@ -231,4 +217,4 @@ file_reference = "MAG001"
 scan_num = [152]
 
 data_fill(directory, output_folder, file_reference, scan_num)
-
+#q_check(directory,scan_num)

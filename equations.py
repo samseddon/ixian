@@ -46,7 +46,7 @@ def qy_angle(Param_dict):
         qy_angles.append(angle)
     return qy_angles
 
-def dead_pixel(f,param,two_theta_range):
+def dead_pixel(f,param,two_theta_range,two_theta_h_range,x_low,x_hig,y_low,y_hig):
     #  REMOVE THE DEAD PIXELS
     DeadRow1 = param['DeadRow1']
     # Defines the Dead regions on the Pilatus where the chips are connected - 300k so only in rows!   #######
@@ -59,18 +59,22 @@ def dead_pixel(f,param,two_theta_range):
     two_theta_range_new = np.concatenate((two_theta_range[:DeadRow1 - 1],
                                           two_theta_range[DeadRow2 + 1:DeadRow3 - 1],
                                           two_theta_range[DeadRow4 + 1:]))
-    return f_new,two_theta_range_new
+    f_cut = np.array(f_new)
+    f_cut = f_cut[y_low:y_hig,x_low:x_hig]
+    two_theta_range_new = two_theta_range_new[y_low:y_hig]
+    two_theta_h_range = two_theta_h_range[x_low:x_hig]
+    return f_cut,two_theta_range_new,two_theta_h_range
 
 def progress_bar(progress, total,start_t): #here progress is an integer for a loop say, and total is a length of the loop
     percent = 100 * (progress/float(total))
-    bar = '█' * int(percent/2) + '-' *int((100-int(percent))/2)
+    bar = '█' * int(percent/2) + '-' *int((100-percent)/2)
     time_n = (time.time()-start_t)*(100/percent)
     time_elapsed = (time.time()-start_t)
     if progress == 1:
-        print(f"\n|{bar}| {percent:.2f}%", end = ", eta = " + str(int((time_n-time_elapsed)/60)) +" mins "+"\r")
-    print(f"\r|{bar}| {percent:.2f}%", end = ", eta = " + str(int((time_n-time_elapsed)/60)) +" mins "+"\r")
+        print(Fore.RESET + f"\n|{bar}| {percent:.2f}%", end = ", eta = " + str(int((time_n-time_elapsed))) +" seconds "+"\r")
+    print(Fore.RESET + f"\r|{bar}| {percent:.2f}%", end = ", eta = " + str(int((time_n-time_elapsed))) +" seconds "+"\r")
     if progress==total:
-        print(Fore.GREEN + f"\r|{bar}| {percent:.2f}%" , end = ", took "+str(int(time_elapsed/60))+ "mins "+ Fore.RED + "\n\n") 
+        print(Fore.GREEN + f"\r|{bar}| {percent:.2f}%" , end = ", took "+str(int(time_elapsed))+ " seconds "+ Fore.RESET + "\n\n") 
 
 def existential_check(o_f, f_s, folder): #file name, file suffix, destination folder
     f_n = str(o_f + f_s)
