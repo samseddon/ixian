@@ -23,10 +23,10 @@ def calc_qy(twoTheta, eta, wvl, angle_y):
          * np.cos(twoTheta / 180 * np.pi - eta / 180 * np.pi)
     return qy
 
-def index_grid(Param_dict):  # This is the grid that keeps track of how mnay elements are being put into each Q voxel.    # Identical size to Q volume
-    global idx_grid
-    idx_grid = np.zeros((Param_dict['nr_pts_x'], Param_dict['nr_pts_y'], Param_dict['nr_pts_z']))
-    return idx_grid
+#def index_grid(Param_dict):  # This is the grid that keeps track of how mnay elements are being put into each Q voxel.    # Identical size to Q volume
+#    global idx_grid
+#    idx_grid = np.zeros((Param_dict['nr_pts_x'], Param_dict['nr_pts_y'], Param_dict['nr_pts_z']))
+#return idx_grid
 
 # Makes a list of 2thetas corresponding to each row of pixels (top down) in an image
 def generate_two_thetas(TwoTheta0, Param_dict):

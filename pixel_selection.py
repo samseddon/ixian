@@ -6,6 +6,8 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.patches as patches
+
 
 def q_lim(spot_dict,scan_num,directory):
     import_var = directory + "user_defined_parameters/qlim/qlim_" + spot_dict[str(scan_num[0])]+'.txt'
@@ -18,9 +20,6 @@ def q_lim(spot_dict,scan_num,directory):
 
 
 def q_array_init(param, spot_dict,scan_num, directory):
-    #    nr_pts_x = param['nr_pts_x']
-    #    nr_pts_y = param['nr_pts_y']
-    #    nr_pts_z = param['nr_pts_z']
 
     qlim_dict = q_lim(spot_dict,scan_num,directory)
     
@@ -61,6 +60,7 @@ def find_q_index(qx,qy,qz,q_x_fin,q_y_fin,q_z_fin,qlim_dict):
                 break
         return q_index_dict
 
+
 def find_n_lim(directory,spot_dict,scan_num,limit_dict,qlim_dict):
     q_x_lim_min = []
     q_y_lim_min = []
@@ -82,8 +82,6 @@ def find_n_lim(directory,spot_dict,scan_num,limit_dict,qlim_dict):
               nr_pts = nr_pts + 1 
     qlim_dict['nr_pts'] = nr_pts
     return qlim_dict
-
-
 
 
 def find_q_lim(q,directory,spot_dict,scan_num,limit_dict):
@@ -115,7 +113,7 @@ def find_q_lim(q,directory,spot_dict,scan_num,limit_dict):
        print('Created file',filename)
 
 
-def data_fill(directory,output_folder,file_reference,scan_num):
+def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     files_location = os.listdir(directory+'data/')
     master_files = [m for m in files_location if m.startswith(file_reference) and m.endswith(".edf")]
     master_files = [c for c in master_files if int(c.split("_")[-2]) in scan_num]
@@ -125,24 +123,32 @@ def data_fill(directory,output_folder,file_reference,scan_num):
     with open(directory+'user_defined_parameters/spot_dict.txt','r') as inf:
         spot_dict = eval(inf.read())
     param = param_read(spot_dict,scan_num[0],directory)
+    
+    print('\nCreating parameter files')
+    if create_files == True:
+        parameter_setup(directory,master_files, file_reference,spot_dict,scan_num)
 
     print('\nSlicing images and calulating pixel Q values..')
     q_unsorted = []
     limit_dict = []
+    
     for k in range(len(master_files)):
-        q_unsorted_temp,limit_dict_temp = pixel_segmenter(k,directory, master_files, param, start_t,temp,mag)
+        q_unsorted_temp,limit_dict_temp = \
+                pixel_segmenter(k,directory, master_files, param, start_t,temp,mag,file_reference)
         q_unsorted.append(q_unsorted_temp)
         limit_dict.append(limit_dict_temp)
         progress_bar(k+1,len(master_files),start_t)
-
-    find_q_lim(q_unsorted,directory,spot_dict,scan_num,limit_dict)
     
+    print('\nFinding q limits from sliced data and optimising Q_space mesh')
+    if create_files == True:
+        find_q_lim(q_unsorted,directory,spot_dict,scan_num,limit_dict)
+
     q_final,q_x_fin,q_y_fin,q_z_fin,qlim_dict = q_array_init(param, spot_dict, scan_num, directory)
 
 
 
     new_start_t = time.time()
-    print('Inserting pixels into Q_voxels')
+    print('Populating Q_space with pixels')
     for k in range(len(q_unsorted)):
         for i in range(np.shape(q_unsorted[k])[1]):
             for j in range(np.shape(q_unsorted[k])[0]):
@@ -159,6 +165,8 @@ def data_fill(directory,output_folder,file_reference,scan_num):
                             1 + q_final['q_idx'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_z']]
         progress_bar(k+1,len(master_files),new_start_t)
 
+
+    print('\n Normalising Q Space')
     for s in range(q_final['q_idx'].shape[0]):
         for t in range(q_final['q_idx'].shape[1]):
             for u in range(q_final['q_idx'].shape[2]):
@@ -175,7 +183,7 @@ def data_fill(directory,output_folder,file_reference,scan_num):
                 'qz':   q_final['q_z_axis'],\
                 'data': q_final['q_data']}
     
-    with open(existential_check(orig_filename, suffix, output_folder), 'wb') as handle:
+    with open(existential_check(orig_filename, suffix, directory + 'processed_files/'), 'wb') as handle:
         pickle.dump(export, handle, protocol=pickle.HIGHEST_PROTOCOL)
     print("Complete, total duration: {}".format(int(time.time() - start_t))+ ' seconds')
 
@@ -211,9 +219,65 @@ def header_strip(f):
             break
     return dict_count, dict_motor, ub
 
+def omega_offsetter(omega,file_reference,phi):
+    if file_reference == 'MAG001':
+        if phi > - 50:
+            omega_offset = 1.6923
+        else:
+            omega_offset = 3.8765
+    else: 
+        omega_offset = 0
+    return omega + omega_offset
 
-'''This function gets given the relevant files, one at time and will eventually return an array of '''
-def pixel_segmenter(k,directory, master_files,param,start_t,temp,mag):
+def parameter_setup(directory, master_files,file_reference,spot_dict,scan_num):
+    filename = directory+'/user_defined_parameters/param/param_'+spot_dict[str(scan_num[0])]+'.txt'
+    if os.path.exists(filename) == True and\
+            input('Overwrite existing '+spot_dict[str(scan_num[0])]+' file, [y] or n?\n') != 'y':
+        pass
+    else:
+        with open(directory+'/user_defined_parameters/param/standard_param.txt', 'r') as inf:
+            gen_param = eval(inf.read())
+    
+        realx_lim_low = gen_param['realx_lim_low'] 
+        realx_lim_hig = gen_param['realx_lim_hig']
+        realy_lim_low = gen_param['realy_lim_low']
+        realy_lim_hig = gen_param['realy_lim_hig']
+        k = int(len(master_files)/4)
+        f1 = fabio.open(os.path.join(directory+'data/', master_files[k]))
+        f1 = f1.data
+        k = int(len(master_files)/2)
+        f2 = fabio.open(os.path.join(directory+'data/', master_files[k]))
+        f2 = f2.data    
+        k = int(3*len(master_files)/4)
+        f3 = fabio.open(os.path.join(directory+'data/', master_files[k]))
+        f3 = f3.data    
+        fig = plt.figure(figsize = (12,3))
+        fig.add_subplot(131)
+        ax = sns.heatmap(f1)
+        ax.add_patch(patches.Rectangle((realx_lim_low, realy_lim_low),
+            realx_lim_hig-realx_lim_low,realx_lim_hig-realx_lim_low,
+             edgecolor='red',fill=False,lw=2))
+        fig.add_subplot(132)
+        ax = sns.heatmap(f2)
+        ax.add_patch(patches.Rectangle((realx_lim_low, realy_lim_low),
+            realx_lim_hig-realx_lim_low,realx_lim_hig-realx_lim_low,
+             edgecolor='red',fill=False,lw=2))
+        fig.add_subplot(133)
+        ax = sns.heatmap(f3)
+        ax.add_patch(patches.Rectangle((realx_lim_low, realy_lim_low),
+            realx_lim_hig-realx_lim_low,realx_lim_hig-realx_lim_low,
+            edgecolor='red',fill=False,lw=2))
+        plt.show()
+        with open(filename,'w') as inf:
+            inf.write(str(gen_param))
+        print('Created file',filename,'\n if you want to make the window bigger, change in param file')
+
+
+
+'''This function gets given the relevant files, one at time, opens them and strips the header,
+it segments the data as defined previously in parameter files, and outputs back a set of num(files) 
+arrays of the pixels data points and their q_x,q_y and q_z coordinates'''
+def pixel_segmenter(k,directory, master_files,param,start_t,temp,mag,file_reference):
     f1 = fabio.open(os.path.join(directory+'data/', master_files[k]))
     count_head, motor_head, ub = header_strip(f1) 
  
@@ -226,27 +290,21 @@ def pixel_segmenter(k,directory, master_files,param,start_t,temp,mag):
     omega       =   float(motor_head['eta'])
     chi         =   float(motor_head['chi'])   
     phi         =   float(motor_head['phi'])   
-    mag.append(     float(motor_head['ami_mag']))
+    if motor_head['ami_mag'] in motor_head:
+        mag.append(float(motor_head['ami_mag']))
+        
 
     wavelength  =   param['wavelength']
-    #number_x    =   param['nr_pts_x']-1
-    #number_y    =   param['nr_pts_y']-1
-    #number_z    =   param['nr_pts_z']-1
-    
     two_theta_range = np.array(generate_two_thetas(two_theta,param))
     two_theta_h_range = np.array(qy_angle(param))#
-
-    if phi > - 50:
-        omega_offset = 1.6923
-    else:
-        omega_offset = 3.8765
-    omega = omega + omega_offset
+    
+    omega = omega_offsetter(omega,file_reference,phi)
     
     '''These parameters need to be put into a param_004 file'''
-    realx_lim_low = 200
-    realx_lim_hig = 300
-    realy_lim_low = 260
-    realy_lim_hig = 330
+    realx_lim_low = param['realx_lim_low']
+    realx_lim_hig = param['realx_lim_hig']
+    realy_lim_low = param['realy_lim_low']
+    realy_lim_hig = param['realy_lim_hig']
 
     f_cut,two_theta_range_new, two_theta_h_range = dead_pixel(f1,param,two_theta_range,\
             two_theta_h_range, realx_lim_low,realx_lim_hig,realy_lim_low,realy_lim_hig)
@@ -281,9 +339,6 @@ def pixel_segmenter(k,directory, master_files,param,start_t,temp,mag):
     limit_dict['pixel_qy'] = np.average(qy)
     limit_dict['pixel_qz'] = np.average(qz)
     limit_dict['pixel_qx'] = np.average(qx)
-    #fig = plt.figure(figsize = (5,5))
-    #ax = sns.heatmap(qz)
-    #plt.show()
     f1.close()
     return array, limit_dict
 
@@ -293,5 +348,5 @@ output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files
 file_reference = "MAG001"
 scan_num = [180]
 
-data_fill(directory, output_folder, file_reference, scan_num)
+#data_fill(directory, output_folder, file_reference, scan_num, create_files = False)
 #q_check(directory,scan_num)
