@@ -122,12 +122,12 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     mag = []
     with open(directory+'user_defined_parameters/spot_dict.txt','r') as inf:
         spot_dict = eval(inf.read())
-    param = param_read(spot_dict,scan_num[0],directory)
     
     print('\nCreating parameter files')
     if create_files == True:
         parameter_setup(directory,master_files, file_reference,spot_dict,scan_num)
 
+    param = param_read(spot_dict,scan_num[0],directory)
     print('\nSlicing images and calulating pixel Q values..')
     q_unsorted = []
     limit_dict = []

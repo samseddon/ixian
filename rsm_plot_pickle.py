@@ -56,7 +56,6 @@ def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder):
     q_1_assigned, q_2_assigned, q_3_assigned = input_check(q_1, q_2)
     values_1 = f_1[q_1]
     values_2 = f_1[q_2]
-    print(values_1,values_2)
 
     volume = np.array(f_1['data'])
 #    for i in range(volume.shape[0]):
@@ -80,7 +79,6 @@ def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder):
             q1_q2_matrix[:, i] = np.copy(volume[:, i, q_3_lim[0]:q_3_lim[1]].mean(axis=1) + 10 ** (-8))
 
     fin = q1_q2_matrix.flatten('F')
-    print 
     fq_1 = []
     fq_2 = []
     # INTERPOLATE TO MAKE A NEW GRID
