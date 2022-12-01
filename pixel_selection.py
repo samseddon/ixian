@@ -8,38 +8,115 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.patches as patches
 
-'''This function reads in the qlim_'spotdict-value'.txt, which includes all of
-the qx,qy,qz limits, and the number of points that this is run over. '''
-def q_lim(spot_dict,scan_num,directory):
-    import_var = directory + "user_defined_parameters/qlim/qlim_" + spot_dict[str(scan_num[0])]+'.txt'
+def q_lim(spot_dict,
+          scan_num,
+          directory):
+    """ Uses scan number to read a file to open relevant scan dictionary 
+    and returns a dictionary of the Q_space limits
+           Parameters:
+               spot_dict(dict)   : dictionary of scans and spots
+               scan_num(array)   : array of scan numbers being read
+               directory(string) : string pointing to data directory structure
+           Returns
+               dict1(dict)       : dictionary of q_limits and n_pts
+    """
+    import_var = directory \
+                 + "user_defined_parameters/qlim/qlim_" \
+                 + spot_dict[str(scan_num[0])] \
+                 + ".txt" \
+
     if os.path.exists(import_var)==False:
-       raise(ValueError("qlim file does not exist"))
-    with open(import_var,'r') as inf:
+       raise(ValueError("qlim file does not exist, consider running"\
+                         "again with create_files = True"))
+    
+    with open(import_var,"r") as inf:
         dict1 = eval(inf.read())
     return dict1
             
 
-
-def q_array_init(param, spot_dict,scan_num, directory):
-
+def q_array_init(param,
+                 spot_dict,
+                 scan_num,
+                 directory):
+    '''Here the Q array is created from the dictionary of Q_limits, sliced
+    into a number of points n_pts. 
+           Parameters: 
+               param(dict)       : dictionary of general spot parameters 
+               spot_dict(dict)   : dictionary of scans and spots
+               scan_num(array)   : array of scan numbers being read
+               directory(string) : string pointing to data directory structure
+           Returns:
+               dict1(dict)       : dictionary containing a two arrrays, q_data
+                                   to be populated with pixels, q_idx to keep
+                                   track of how many data points have been put
+                                   into q_data, and the q axes of these arrays
+               3 x q-axes(array) : required later so exported simultaneously
+                                   to save time
+               q_lim_dict(dict)  : dictionary of qlims and number of points q
+                                   space was split into
+    '''
     qlim_dict = q_lim(spot_dict,scan_num,directory)
     
     dict1 = {}
-    dict1['q_data'] = np.zeros((qlim_dict['nr_pts'],qlim_dict['nr_pts'],qlim_dict['nr_pts']))
-    dict1['q_idx']  = np.zeros((qlim_dict['nr_pts'],qlim_dict['nr_pts'],qlim_dict['nr_pts']))  
-    dict1['q_x_axis'] = np.linspace(qlim_dict['qx_min'], qlim_dict['qx_max'], qlim_dict['nr_pts'])
-    dict1['q_y_axis'] = np.linspace(qlim_dict['qy_min'], qlim_dict['qy_max'], qlim_dict['nr_pts'])
-    dict1['q_z_axis'] = np.linspace(qlim_dict['qz_min'], qlim_dict['qz_max'], qlim_dict['nr_pts'])
+    dict1["q_data"] = np.zeros((qlim_dict["nr_pts"],
+                                qlim_dict["nr_pts"],
+                                qlim_dict["nr_pts"]))
     
-    return dict1, dict1['q_x_axis'],dict1['q_y_axis'],dict1['q_z_axis'],qlim_dict
+    dict1['q_idx']  = np.zeros((qlim_dict["nr_pts"],
+                                qlim_dict["nr_pts"],
+                                qlim_dict["nr_pts"]))  
+    
+    dict1["q_x_axis"] = np.linspace(qlim_dict["qx_min"],
+                                    qlim_dict["qx_max"], 
+                                    qlim_dict["nr_pts"])
+    
+    dict1["q_y_axis"] = np.linspace(qlim_dict["qy_min"], 
+                                    qlim_dict["qy_max"], 
+                                    qlim_dict["nr_pts"])
+    
+    dict1["q_z_axis"] = np.linspace(qlim_dict["qz_min"], 
+                                    qlim_dict["qz_max"], 
+                                    qlim_dict["nr_pts"])
+    
+    return dict1,\
+           dict1["q_x_axis"],\
+           dict1["q_y_axis"],\
+           dict1["q_z_axis"],\
+           qlim_dict
 
-def find_q_index(qx,qy,qz,q_x_fin,q_y_fin,q_z_fin,qlim_dict):
+
+def find_q_index(qx,
+                 qy,
+                 qz,
+                 q_x_fin,
+                 q_y_fin,
+                 q_z_fin,
+                 qlim_dict):
+    """ Checks if the given Q coordinates for a pixel in q-space are in 
+    the new q-space array, and returns the index of the points in the 
+    q_array ready for population of that space
+           Parameters: 
+               qx(int)           : Pixel qx coordinate
+               qy(int)           : Pixel qy coordinate
+               qz(int)           : Pixel qz coordinate
+               q_x_fin(array)    : qx coordinates of initilised Q array 
+               q_y_fin(array)    : qy coordinates of initilised Q array
+               q_z_fin(array)    : qz coordinates of initilised Q array
+               q_lim_dict(dict)  : dictionary of qlims and number of points q
+                                   space was split into
+           Returns:
+               1, int             : When pixel is out of range
+               q_index_dict(dict) : dictionary of indexes of pixels position
+                                    in the initilised Q_space
+    """
     q_index_dict = {}
-    
-    if qx < qlim_dict['qx_min'] or qx > qlim_dict['qx_max'] \
-            or qy < qlim_dict['qy_min'] or qy > qlim_dict['qy_max'] \
-            or qz < qlim_dict['qz_min'] or qz > qlim_dict['qz_max']:
-                return(1)
+    if qx < qlim_dict['qx_min'] \
+       or qx > qlim_dict['qx_max'] \
+       or qy < qlim_dict['qy_min'] \
+       or qy > qlim_dict['qy_max'] \
+       or qz < qlim_dict['qz_min'] \
+       or qz > qlim_dict['qz_max']:    
+        return(1)
     else: 
         for i_x in range(len(q_x_fin)):
             if(qx > q_x_fin[i_x]):
@@ -227,48 +304,81 @@ def omega_offsetter(omega,file_reference,phi):
         omega_offset = 0
     return omega + omega_offset
 
-def parameter_setup(directory, master_files,file_reference,spot_dict,scan_num):
-    filename = directory+'/user_defined_parameters/param/param_'+spot_dict[str(scan_num[0])]+'.txt'
-    if os.path.exists(filename) == True and\
-            input('Overwrite existing '+spot_dict[str(scan_num[0])]+' file, [y] or n?\n') != 'y':
+def parameter_setup(directory,
+                    master_files,
+                    file_reference,
+                    spot_dict,scan_num
+                    ):
+    filename = directory \
+               + '/user_defined_parameters/param/param_' \
+               + spot_dict[str(scan_num[0])] \
+               + '.txt' 
+    if os.path.exists(filename) == True \
+        and input('Overwrite existing '
+                  + spot_dict[str(scan_num[0])]
+                  + ' file, [y] or n?\n')\
+            != 'y':
         pass
     else:
         with open('setup/standard_param.txt', 'r') as inf:
             gen_param = eval(inf.read())
     
-        realx_lim_low = gen_param['realx_lim_low'] 
-        realx_lim_hig = gen_param['realx_lim_hig']
-        realy_lim_low = gen_param['realy_lim_low']
-        realy_lim_hig = gen_param['realy_lim_hig']
+        REALX_LIM_LOW = gen_param['realx_lim_low'] 
+        REALX_LIM_HIG = gen_param['realx_lim_hig']
+        REALY_LIM_LOW = gen_param['realy_lim_low']
+        REALY_LIM_HIG = gen_param['realy_lim_hig']
+
         k = int(len(master_files)/4)
-        f1 = fabio.open(os.path.join(directory+'data/', master_files[k]))
-        f1 = f1.data
+        f = fabio.open(os.path.join(directory+'data/', master_files[k]))
+        f1 = f.data
+        f.close()
+        
         k = int(len(master_files)/2)
-        f2 = fabio.open(os.path.join(directory+'data/', master_files[k]))
-        f2 = f2.data    
+        f = fabio.open(os.path.join(directory+'data/', master_files[k]))
+        f2 = f.data    
+        f.close()
+        
         k = int(3*len(master_files)/4)
-        f3 = fabio.open(os.path.join(directory+'data/', master_files[k]))
-        f3 = f3.data    
+        f = fabio.open(os.path.join(directory+'data/', master_files[k]))
+        f3 = f.data    
+        f.close()
+        
         fig = plt.figure(figsize = (12,3))
         fig.add_subplot(131)
+        
         ax = sns.heatmap(f1)
-        ax.add_patch(patches.Rectangle((realx_lim_low, realy_lim_low),
-            realx_lim_hig-realx_lim_low,realx_lim_hig-realx_lim_low,
-             edgecolor='red',fill=False,lw=2))
+        ax.add_patch(patches.Rectangle(
+            (REALX_LIM_LOW, REALY_LIM_LOW),
+            REALX_LIM_HIG-REALX_LIM_LOW,
+            REALX_LIM_HIG-REALX_LIM_LOW,
+            edgecolor='red',
+            fill=False,
+            lw=2))
         fig.add_subplot(132)
         ax = sns.heatmap(f2)
-        ax.add_patch(patches.Rectangle((realx_lim_low, realy_lim_low),
-            realx_lim_hig-realx_lim_low,realx_lim_hig-realx_lim_low,
-             edgecolor='red',fill=False,lw=2))
+        ax.add_patch(patches.Rectangle(
+            (REALX_LIM_LOW, REALY_LIM_LOW),
+            REALX_LIM_HIG-REALX_LIM_LOW,
+            REALX_LIM_HIG-REALX_LIM_LOW,
+            edgecolor='red',
+            fill=False,
+            lw=2))
         fig.add_subplot(133)
         ax = sns.heatmap(f3)
-        ax.add_patch(patches.Rectangle((realx_lim_low, realy_lim_low),
-            realx_lim_hig-realx_lim_low,realx_lim_hig-realx_lim_low,
-            edgecolor='red',fill=False,lw=2))
+        ax.add_patch(patches.Rectangle(
+            (REALX_LIM_LOW, REALY_LIM_LOW),
+            REALX_LIM_HIG-REALX_LIM_LOW,
+            REALX_LIM_HIG-REALX_LIM_LOW,
+            edgecolor='red',
+            fill=False,
+            lw=2))
         plt.show()
+
         with open(filename,'w') as inf:
             inf.write(str(gen_param))
-        print('Created file',filename,'\n if you want to make the window bigger, change in param file')
+        print('Created file',
+              filename,
+              '\n Change slice region in parameter file')
 
 
 
