@@ -19,7 +19,7 @@ for i in range(len(scan_num)):
 
 file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index
 axis_1 = 'qx'
-axis_2 = 'qz'
+axis_2 = 'qy'
 axis_3_limits= [0,-1]
 axis_3_limits = [1,240]
 

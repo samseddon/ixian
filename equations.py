@@ -32,24 +32,22 @@ def calc_qy(twoTheta, eta, wvl, angle_y):
 def generate_two_thetas(TwoTheta0, Param_dict):
     two_thetas = []
     for x in range(Param_dict['ShotHeight']):
-        two_theta = TwoTheta0 + (Param_dict['Zero_Pixel_Ver'] - float(x)) * 0.01126  # degrees per row determined from alignment calibration (pixel # vs. two theta)
+        two_theta = TwoTheta0 + (Param_dict['Zero_Pixel_Ver'] - float(x)) * Param_dict['det_ang']#0.01126  # degrees per row determined from alignment calibration (pixel # vs. two theta)
         two_thetas.append(two_theta)
     return two_thetas
-
-
 
 def qy_angle(Param_dict):
     qy_angles = []
     for x in range(Param_dict['ShotHeight_y']):
-        angle = (Param_dict['Zero_Pixel_Hor'] - Param_dict['chi_offset'] - float(x)) * 0.01126
+        angle = (Param_dict['Zero_Pixel_Hor'] - Param_dict['chi_offset'] - float(x)) * Param_dict['det_ang']#0.01126
         # degrees per column determined from alignment calibration (pixel # vs. nu)
         qy_angles.append(angle)
     return qy_angles
 
 def dead_pixel(f,param,two_theta_range,two_theta_h_range,x_low,x_hig,y_low,y_hig):
     #  REMOVE THE DEAD PIXELS
-    DeadRow1 = param['DeadRow1']
     # Defines the Dead regions on the Pilatus where the chips are connected - 300k so only in rows!   #######
+    DeadRow1 = param['DeadRow1']
     DeadRow2 = param['DeadRow2']
     DeadRow3 = param['DeadRow3']
     DeadRow4 = param['DeadRow4']

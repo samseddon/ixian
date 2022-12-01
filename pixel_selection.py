@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.patches as patches
 
-
+'''This function reads in the qlim_'spotdict-value'.txt, which includes all of
+the qx,qy,qz limits, and the number of points that this is run over. '''
 def q_lim(spot_dict,scan_num,directory):
     import_var = directory + "user_defined_parameters/qlim/qlim_" + spot_dict[str(scan_num[0])]+'.txt'
     if os.path.exists(import_var)==False:
@@ -72,9 +73,6 @@ def find_n_lim(directory,spot_dict,scan_num,limit_dict,qlim_dict):
     q_x_lim_min = np.average(q_x_lim_min)
     q_z_lim_min = np.average(q_z_lim_min)
     q_y_lim_min = abs(max(q_y_lim_min)-min(q_y_lim_min))/len(q_y_lim_min)
-    nr_pts_x = 1
-    nr_pts_y = 1
-    nr_pts_z = 1
     nr_pts = 1
     while abs(qlim_dict['qx_max']-qlim_dict['qx_min'])/nr_pts > q_x_lim_min and \
           abs(qlim_dict['qy_max']-qlim_dict['qy_min'])/nr_pts > q_y_lim_min and \
@@ -235,7 +233,7 @@ def parameter_setup(directory, master_files,file_reference,spot_dict,scan_num):
             input('Overwrite existing '+spot_dict[str(scan_num[0])]+' file, [y] or n?\n') != 'y':
         pass
     else:
-        with open(directory+'/user_defined_parameters/param/standard_param.txt', 'r') as inf:
+        with open('setup/standard_param.txt', 'r') as inf:
             gen_param = eval(inf.read())
     
         realx_lim_low = gen_param['realx_lim_low'] 
