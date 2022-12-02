@@ -14,13 +14,12 @@ file_reference = "MAG001"
 scan_num = [[244]]
 
 for i in range(len(scan_num)):
-    data_fill(directory, output_folder, file_reference, scan_num[i], create_files = True)
+    data_fill(directory, output_folder, file_reference, scan_num[i], create_files = False)
 
 
 file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index
 axis_1 = 'qx'
-axis_2 = 'qy'
-axis_3_limits= [0,-1]
+axis_2 = 'qz'
 axis_3_limits = [1,240]
 
 

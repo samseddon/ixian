@@ -105,7 +105,7 @@ def find_q_index(qx,
                q_lim_dict(dict)  : dictionary of qlims and number of points q
                                    space was split into
            Returns:
-               1, int             : When pixel is out of range
+               1             : When pixel is out of range
                q_index_dict(dict) : dictionary of indexes of pixels position
                                     in the initilised Q_space
     """
@@ -124,12 +124,14 @@ def find_q_index(qx,
             else:        
                 q_index_dict['i_x'] = i_x
                 break
+
         for i_y in range(len(q_y_fin)):
             if(qy > q_y_fin[i_y]):
                 pass
             else:        
                 q_index_dict['i_y'] = i_y
                 break
+        
         for i_z in range(len(q_z_fin)):
             if(qz > q_z_fin[i_z]):
                 pass
@@ -140,90 +142,172 @@ def find_q_index(qx,
 
 
 def find_n_lim(directory,spot_dict,scan_num,limit_dict,qlim_dict):
+    """ This program takes the qlimits, and the average pixel size in q-space,
+    and maximises n_pts, the number of points our new q_array is split up 
+    into, thus achieving the best possible resolution without underpopulating 
+    the new q_array.
+           Parameters: 
+               directory(string) : string pointing to data directory structure
+               spot_dict(dict)   : dictionary of scans and spots
+               scan_num(array)   : array of scan numbers being read
+               limit_dict        : dictionary of size of average size of
+                                   pixels in qspace to avoid striping
+               qlim_dict(dict)   : dictionary of qlims 
+                                    
+           Returns:
+               qlim_dict(dict)  : dictionary of qlims with the newly appended
+                                  n_pts, so q_array can be properly initilised
+    """
     q_x_lim_min = []
     q_y_lim_min = []
     q_z_lim_min = []
+    
     for k in range(len(limit_dict)):
         q_y_lim_min.append(limit_dict[k]['pixel_qy'])
         q_x_lim_min.append(limit_dict[k]['pixel_qx'])
         q_z_lim_min.append(limit_dict[k]['pixel_qz'])
+    
     q_x_lim_min = np.average(q_x_lim_min)
     q_z_lim_min = np.average(q_z_lim_min)
     q_y_lim_min = abs(max(q_y_lim_min)-min(q_y_lim_min))/len(q_y_lim_min)
+    
     nr_pts = 1
-    while abs(qlim_dict['qx_max']-qlim_dict['qx_min'])/nr_pts > q_x_lim_min and \
-          abs(qlim_dict['qy_max']-qlim_dict['qy_min'])/nr_pts > q_y_lim_min and \
-          abs(qlim_dict['qz_max']-qlim_dict['qz_min'])/nr_pts > q_z_lim_min:
+    while abs(qlim_dict['qx_max']-qlim_dict['qx_min'])/nr_pts > q_x_lim_min \
+      and abs(qlim_dict['qy_max']-qlim_dict['qy_min'])/nr_pts > q_y_lim_min \
+      and abs(qlim_dict['qz_max']-qlim_dict['qz_min'])/nr_pts > q_z_lim_min:
               nr_pts = nr_pts + 1 
+    
     qlim_dict['nr_pts'] = nr_pts
+    
     return qlim_dict
 
 
 def find_q_lim(q,directory,spot_dict,scan_num,limit_dict):
-    '''This function takes the newly created q_unsorted array, from all the scans and determines the 
-    min and max values for the new Q array.'''
+    """ Given all of the data from the pixels, the minimum and maximum of 
+    their q-space coordinates are found and the absolute limits of the 
+    detector in q-space is determined, to create a q_array of perfect size. 
+    It passes these to function find_n_lim, and writes the qlim dictionary 
+    for future reference.
+
+            Parameters: 
+               q(dict(array))    : all pixel data across k scans
+               directory(string) : string pointing to data directory structure
+               spot_dict(dict)   : dictionary of scans and spots
+               scan_num(array)   : array of scan numbers being read
+               limit_dict        : dictionary of size of average size of
+                                   pixels in qspace to avoid striping
+    """
     qx = []
     qy = []
     qz = []
+    
     for k in range(len(q)):
         for i in range(np.shape(q[k])[1]):
             for j in range(np.shape(q[k])[0]):
                 qx.append(q[k][j][i]['qx'])
                 qy.append(q[k][j][i]['qy'])
                 qz.append(q[k][j][i]['qz'])
-    output = { 
-     'qz_min' : min(qz),
-     'qz_max' : max(qz),
-     'qx_min' : min(qx),
-     'qx_max' : max(qx),
-     'qy_min' : min(qy),
-     'qy_max' : max(qy)}
-    output = find_n_lim(directory, spot_dict, scan_num, limit_dict,output)
-    filename = directory+'user_defined_parameters/qlim/qlim_'+spot_dict[str(scan_num[0])]+'.txt'
-    if os.path.exists(filename) == True and input('Overwrite existing file, [y] or n?\n') != 'y':
+    
+    q_limits_without_n_pts = {'qz_min' : min(qz),
+                              'qz_max' : max(qz),
+                              'qx_min' : min(qx),
+                              'qx_max' : max(qx),
+                              'qy_min' : min(qy),
+                              'qy_max' : max(qy)}
+    
+    q_limits_with_n_pts = find_n_lim(directory,
+                        spot_dict,
+                        scan_num,
+                        limit_dict,
+                        q_limits_without_n_pts)
+    filename = directory\
+               + 'user_defined_parameters/qlim/qlim_'\
+               + spot_dict[str(scan_num[0])]\
+               + '.txt'
+    
+    if os.path.exists(filename) == True \
+        and input('Overwrite existing file, [y] or n?\n') != 'y':
             pass
     else:
        with open(filename,'w') as inf:
-          inf.write(str(output))
+          inf.write(str(q_limits_with_n_pts))
        print('Created file',filename)
 
 
 def data_fill(directory,output_folder,file_reference,scan_num,create_files):
+    """ The main function to call, this finds the relevant data files, writes
+    (if create_files = True) and reads the q_limits, initiles an array in 
+    q-space, populates it with pixels and normalises the result. 
+           Parameters: 
+               directory(string)      : string pointing to data directory 
+                                        structure
+               file_reference(string) : unique file identifier for a given 
+                                        experiment
+               scan_num(array)        : array of scan numbers being read
+               create_files(bool)     : should be True for first use, allows
+                                        functions for given 
+    """
     files_location = os.listdir(directory+'data/')
-    master_files = [m for m in files_location if m.startswith(file_reference) and m.endswith(".edf")]
-    master_files = [c for c in master_files if int(c.split("_")[-2]) in scan_num]
+    master_files = [m for m in files_location \
+                    if m.startswith(file_reference) \
+                    and m.endswith(".edf")]
+    master_files = [c for c in master_files \
+                    if int(c.split("_")[-2]) \
+                    in scan_num]
+    
     start_t = time.time()
     temp= []
     mag = []
+    
     with open(directory+'user_defined_parameters/spot_dict.txt','r') as inf:
         spot_dict = eval(inf.read())
     
     print('\nCreating parameter files')
+    
     if create_files == True:
-        parameter_setup(directory,master_files, file_reference,spot_dict,scan_num)
+        parameter_setup(directory,
+                        master_files, 
+                        file_reference,
+                        spot_dict,
+                        scan_num)
 
-    param = param_read(spot_dict,scan_num[0],directory)
+
+    param = param_read(spot_dict,
+                       scan_num[0],
+                       directory)
+    
     print('\nSlicing images and calulating pixel Q values..')
+    
     q_unsorted = []
     limit_dict = []
     
     for k in range(len(master_files)):
-        q_unsorted_temp,limit_dict_temp = \
-                pixel_segmenter(k,directory, master_files, param, start_t,temp,mag,file_reference)
+        q_unsorted_temp,limit_dict_temp = pixel_segmenter(k,
+                                                          directory, 
+                                                          master_files, 
+                                                          param, 
+                                                          start_t,
+                                                          temp,
+                                                          mag,
+                                                          file_reference)
         q_unsorted.append(q_unsorted_temp)
         limit_dict.append(limit_dict_temp)
         progress_bar(k+1,len(master_files),start_t)
     
     print('\nFinding q limits from sliced data and optimising Q_space mesh')
+    
     if create_files == True:
         find_q_lim(q_unsorted,directory,spot_dict,scan_num,limit_dict)
 
-    q_final,q_x_fin,q_y_fin,q_z_fin,qlim_dict = q_array_init(param, spot_dict, scan_num, directory)
-
-
-
+    q_final,q_x_fin,q_y_fin,q_z_fin,qlim_dict = q_array_init(param, 
+                                                             spot_dict, 
+                                                             scan_num, 
+                                                             directory)
     new_start_t = time.time()
     print('Populating Q_space with pixels')
+    
+    # NOTE These remain ugly as they are going to be put into a function soon
+
     for k in range(len(q_unsorted)):
         for i in range(np.shape(q_unsorted[k])[1]):
             for j in range(np.shape(q_unsorted[k])[0]):
@@ -242,6 +326,7 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
 
 
     print('\n Normalising Q Space')
+    
     for s in range(q_final['q_idx'].shape[0]):
         for t in range(q_final['q_idx'].shape[1]):
             for u in range(q_final['q_idx'].shape[2]):
@@ -252,49 +337,105 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
 
 
     orig_filename = str(scan_num[0])+'_new_3d_fill'
+    
     suffix = '.pickle'
+    
     export = {  'qx':   q_final['q_x_axis'],\
                 'qy':   q_final['q_y_axis'],\
                 'qz':   q_final['q_z_axis'],\
                 'data': q_final['q_data']}
-    
-    with open(existential_check(orig_filename, suffix, directory + 'processed_files/'), 'wb') as handle:
+    if os.path.exists(orig_filename) == True:
+        new_filename = existential_check(orig_filename,
+                                     suffix, 
+                                     directory + 'processed_files/')
+                                     
+    else: 
+        new_filename = orig_filename
+    with open(new_filename,'wb') as handle:
         pickle.dump(export, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    print("Complete, total duration: {}".format(int(time.time() - start_t))+ ' seconds')
+    
+    print("Complete, total duration: {}".format(int(time.time() 
+                                                    - start_t))
+                                                    + ' seconds')
 
 def param_read(spot_dict,scan_num,directory):
-    import_var = directory + "user_defined_parameters/param/param_" + spot_dict[str(scan_num)]+'.txt'
+    """ Takes the spot string defined in the spot dictionary and opens the 
+    corresponding parameter file, returning it.
+           Parameters: 
+               spot_dict(dict)        : dictionary of scans and spots
+               scan_num(array)        : array of scan numbers being read
+               directory(string)      : string pointing to data directory 
+                                        structure
+           Returns:
+               newly_read_param_file  : as it says on the tin
+    """
+    import_var = directory\
+                 + "user_defined_parameters/param/param_" \
+                 + spot_dict[str(scan_num)]\
+                 + '.txt'
     if os.path.exists(import_var)==False:
-       raise(ValueError("Param_dict for spot non-existant"))
+        raise(ValueError("Param_dict for spot non-existant"))
+    
     with open(import_var,'r') as inf:
-        dict1 = eval(inf.read())
-    return dict1
+        newly_read_param_dict = eval(inf.read())
+    return newly_read_param_dict
 
 
-'''This function strips the motor and counter positions, and spits them back as a dictionary 
-with the pnemonics '''
 def header_strip(f):
+    """ Takes each file when called and returns the header motors, counter and
+    ub matrix for each scan. 
+           Parameters: 
+               f(fabio.edfimage)      : raw image file
+           Returns:
+               dict_count(dict)       : dictionary of counter paramters 
+                                        with the keys as their mnemonics
+               dict_motor(dict)       : dictionary of motor paramters 
+                                        with the keys as their mnemonics
+               ub(array)              : ub matrix outputted as an array
+               WAVELENGTH             : WAVELENGTH
+    """
     dict_count  = {}
     dict_motor  = {} 
+
     ub = np.array(f.header.get('UB_pos').split(' '))
     count_mne   = f.header.get('counter_mne').split(' ')
     count_pos   = f.header.get('counter_pos').split(' ')
     motor_mne   = f.header.get('motor_mne').split(' ')
     motor_pos   = f.header.get('motor_pos').split(' ')
     ub          = ub.astype(float) 
+    WAVELENGTH  = f.header.get('source_wavelength').split(' ')
+    WAVELENGTH  = float(WAVELENGTH[0])
     for key in count_mne:
         for value in count_pos:
             dict_count[key] = value
             count_pos.remove(value)
             break
+    
     for key in motor_mne:
         for value in motor_pos:
             dict_motor[key] = value
             motor_pos.remove(value)
             break
-    return dict_count, dict_motor, ub
+    
+    return dict_count, dict_motor, ub, WAVELENGTH
 
-def omega_offsetter(omega,file_reference,phi):
+
+def omega_offsetter(omega,
+                    file_reference,
+                    phi):
+    """ At least temporarily removed the presence of magic numbers in the code
+    which with a bit of magic from didier and I later in the experiment should
+    result in not needing omega offsets at all if we just use the ub (or 
+    something) 
+           Parameters: 
+               omega(float)           : omega values of the chosen scan image
+               file_reference(string) : unique file identifier for a given     
+                                        experiment
+               phi(float)             : phi value of the chosen scan image
+           Returns:
+               float                  : omega+omega_offset, an outdated and 
+                                        soon fixed
+    """
     if file_reference == 'MAG001':
         if phi > - 50:
             omega_offset = 1.6923
@@ -304,11 +445,25 @@ def omega_offsetter(omega,file_reference,phi):
         omega_offset = 0
     return omega + omega_offset
 
+
 def parameter_setup(directory,
                     master_files,
                     file_reference,
-                    spot_dict,scan_num
-                    ):
+                    spot_dict,
+                    scan_num):
+    """ When called, checks if you want to overwrite an existing parameter 
+    file, and if so, calls a standard parameter file and writes a spot 
+    specific parameter file after plotting a red square indicating the real
+    space crop that will take place. To change this standard, central red spot
+    open the now written spot parameters and tweak the last 4 parameters
+            Parameters: 
+               directory(string)      : string pointing to data directory 
+               master_files(list)     : list of files for given scan number
+               file_reference(string) : unique file identifier for a given 
+                                        experiment
+               spot_dict(dict)        : dictionary of scans and spots
+               scan_num(list)        : list of scan numbers being read
+    """
     filename = directory \
                + '/user_defined_parameters/param/param_' \
                + spot_dict[str(scan_num[0])] \
@@ -382,12 +537,42 @@ def parameter_setup(directory,
 
 
 
-'''This function gets given the relevant files, one at time, opens them and strips the header,
-it segments the data as defined previously in parameter files, and outputs back a set of num(files) 
-arrays of the pixels data points and their q_x,q_y and q_z coordinates'''
-def pixel_segmenter(k,directory, master_files,param,start_t,temp,mag,file_reference):
-    f1 = fabio.open(os.path.join(directory+'data/', master_files[k]))
-    count_head, motor_head, ub = header_strip(f1) 
+def pixel_segmenter(k,
+                    directory, 
+                    master_files,
+                    param,
+                    start_t,
+                    temp,
+                    mag,
+                    file_reference):
+    '''This function gets given the relevant files, one at time, opens them 
+    and strips the header, it slices out  the data as defined in parameter 
+    files, and outputs back an array item in scan numbers  of dictionaries 
+    of the pixels data points and their q_x,q_y and q_z coordinates. It also 
+    returns any relevant motor/counter positions for any scans that aren't 
+    just an RSM/eta scan, such as an ascan field or temperature
+           Parameters: 
+               k(int)                 : looping variable function is looped 
+                                        over corresponding to each scan
+               directory(string)      : string pointing to data directory 
+               master_files(list)     : list of files for given scan number
+               param(dict)            : dictionary of general spot parameters 
+               start_t(float)         : time function first called for 
+                                        progress bar
+               temp(list)             : list of temperature of scan
+               mag(list)              : list of magnetic field of scan
+               file_reference(string) : unique file identifier for a given 
+           Returns:
+               dict_of_data_and_coordinates : list of dictionaries containing 
+                                              pixel data and q space 
+                                              coordinate
+               limit_dict                   : dictionary of size of average 
+                                              size of pixels in qspace to 
+                                              avoid striping
+    '''
+    f = fabio.open(os.path.join(directory+'data/', master_files[k]))
+
+    count_head, motor_head, ub, wavelength = header_strip(f) 
  
     attn        =   float(count_head['attn'])
     trans       =   float(count_head['trans'])
@@ -398,28 +583,33 @@ def pixel_segmenter(k,directory, master_files,param,start_t,temp,mag,file_refere
     omega       =   float(motor_head['eta'])
     chi         =   float(motor_head['chi'])   
     phi         =   float(motor_head['phi'])   
+   
     if motor_head['ami_mag'] in motor_head:
         mag.append(float(motor_head['ami_mag']))
         
-
-    wavelength  =   param['wavelength']
     two_theta_range = np.array(generate_two_thetas(two_theta,param))
     two_theta_h_range = np.array(qy_angle(param))#
     
     omega = omega_offsetter(omega,file_reference,phi)
     
-    '''These parameters need to be put into a param_004 file'''
     realx_lim_low = param['realx_lim_low']
     realx_lim_hig = param['realx_lim_hig']
     realy_lim_low = param['realy_lim_low']
     realy_lim_hig = param['realy_lim_hig']
 
-    f_cut,two_theta_range_new, two_theta_h_range = dead_pixel(f1,param,two_theta_range,\
-            two_theta_h_range, realx_lim_low,realx_lim_hig,realy_lim_low,realy_lim_hig)
+    f_cut,\
+    two_theta_range_new,\
+    two_theta_h_range = dead_pixel(f,
+                                   param,
+                                   two_theta_range,
+                                   two_theta_h_range,
+                                   realx_lim_low,
+                                   realx_lim_hig,
+                                   realy_lim_low,
+                                   realy_lim_hig)
     
-    #f_cut = np.array(f_image)
-    #f_cut = f_cut[realy_lim_low:realy_lim_hig,realx_lim_low:realx_lim_hig]
-    array = []
+    f.close()
+    dict_of_data_and_coordinates = []
     qz = []
     qx = []
     qy = []
@@ -431,24 +621,36 @@ def pixel_segmenter(k,directory, master_files,param,start_t,temp,mag,file_refere
         for j in range(np.shape(f_cut)[0]):
             dict1 = {}
             dict1['data']=f_cut[j,i]
-            dict1['qx'] = calc_qx(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
-            dict1['qy'] = calc_qy(two_theta_range_new[j], omega, wavelength, two_theta_h_range[i])
-            dict1['qz'] = calc_qz(two_theta_range_new[j], omega, wavelength)
-           # print(i,j,dict1['qx'],dicty['qy'])
+            dict1['qx'] = calc_qx(two_theta_range_new[j], 
+                                  omega,
+                                  wavelength,
+                                  two_theta_h_range[i])
+            dict1['qy'] = calc_qy(two_theta_range_new[j],
+                                  omega, 
+                                  wavelength, 
+                                  two_theta_h_range[i])
+            dict1['qz'] = calc_qz(two_theta_range_new[j],
+                                  omega,
+                                  wavelength)
+
             row.append(dict1)
             qz_row.append(dict1['qz'])
             qx_row.append(dict1['qx'])
             qy_row.append(dict1['qy'])
-        array.append(row)
-        qz.append(abs(max(qz_row)-min(qz_row))/len(row))
-        qx.append(abs(max(qx_row)-min(qx_row))/len(row))
+
+        dict_of_data_and_coordinates.append(row)
+        qz.append(abs(max(qz_row) - min(qz_row)) / len(row))
+        qx.append(abs(max(qx_row) - min(qx_row)) / len(row))
         qy.append(np.average(qy_row))
+    
     limit_dict = {}
+
     limit_dict['pixel_qy'] = np.average(qy)
     limit_dict['pixel_qz'] = np.average(qz)
     limit_dict['pixel_qx'] = np.average(qx)
-    f1.close()
-    return array, limit_dict
+    
+    
+    return dict_of_data_and_coordinates, limit_dict
 
 
 directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/"
