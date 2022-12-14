@@ -339,18 +339,15 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     orig_filename = str(scan_num[0])+'_new_3d_fill'
     
     suffix = '.pickle'
-    
+    print(orig_filename) 
     export = {  'qx':   q_final['q_x_axis'],\
                 'qy':   q_final['q_y_axis'],\
                 'qz':   q_final['q_z_axis'],\
                 'data': q_final['q_data']}
-    if os.path.exists(orig_filename) == True:
-        new_filename = existential_check(orig_filename,
+    new_filename = existential_check(orig_filename,
                                      suffix, 
                                      directory + 'processed_files/')
                                      
-    else: 
-        new_filename = orig_filename
     with open(new_filename,'wb') as handle:
         pickle.dump(export, handle, protocol=pickle.HIGHEST_PROTOCOL)
     

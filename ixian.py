@@ -11,7 +11,7 @@ from rsm_plot_pickle import file_checker,  rsm_plot
 directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/"    
 output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/"
 file_reference = "MAG001"
-scan_num = [[244]]
+scan_num = [[186]]
 
 for i in range(len(scan_num)):
     data_fill(directory, output_folder, file_reference, scan_num[i], create_files = False)
@@ -23,5 +23,6 @@ axis_2 = 'qz'
 axis_3_limits = [1,240]
 
 
-f_1, f_name = file_checker(scan_num[0], file_index[0],output_folder)
+f_1, f_name = file_checker(scan_num[0], file_index[0],directory + 'processed_files/')
+print(f_name)
 rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_folder+'images')
