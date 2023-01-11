@@ -1,5 +1,7 @@
-from pixel_selection import data_fill
+
+#from pixel_selection import data_fill
 from rsm_plot_pickle import file_checker,  rsm_plot
+from object_approach import data_fill
 ##
 
 ## MAKE SURE DATA, WHEREVER IT IS, IS IN A FOLDER CALLED MATERIAL/DATA (IE magnetite/data) and also in magnetite is a folder called user_defined_parameters, as before
@@ -11,7 +13,7 @@ from rsm_plot_pickle import file_checker,  rsm_plot
 directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/"    
 output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/"
 file_reference = "MAG001"
-scan_num = [[186]]
+scan_num = [[152]]
 
 for i in range(len(scan_num)):
     data_fill(directory, output_folder, file_reference, scan_num[i], create_files = False)
