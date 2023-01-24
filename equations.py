@@ -21,6 +21,7 @@ def calc_qz(twoTheta, eta, wvl):
 def calc_qy(twoTheta, eta, wvl, angle_y):
     qy = (2 * np.pi / wvl) * np.sin(angle_y / 180 * np.pi) \
          * np.cos(twoTheta / 180 * np.pi - eta / 180 * np.pi)
+    
     return qy
 
 #def index_grid(Param_dict):  # This is the grid that keeps track of how mnay elements are being put into each Q voxel.    # Identical size to Q volume

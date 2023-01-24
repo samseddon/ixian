@@ -1,6 +1,7 @@
-
+#from rsm_plot_pickle import file_checker, rsm_plot
 #from pixel_selection import data_fill
-from rsm_plot_pickle import file_checker,  rsm_plot
+
+from rsm_object_plotter import file_checker,  rsm_plot
 from object_approach import data_fill
 ##
 
@@ -13,10 +14,13 @@ from object_approach import data_fill
 directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/"    
 output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/"
 file_reference = "MAG001"
-scan_num = [[152]]
+scan_num = [[194]]
+
+
 
 for i in range(len(scan_num)):
     data_fill(directory, output_folder, file_reference, scan_num[i], create_files = False)
+
 
 
 file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index

@@ -3,10 +3,12 @@ import os
 import glob
 import numpy as np
 from nexusformat import nexus
+from matplotlib.cm import ScalarMappable
 import matplotlib.pyplot as plt
 from scipy import interpolate
 from equations import existential_check
 from colour_bar import code_TUD_cbar as cbar
+plt.style.use("seddon_TUD") 
 
 def file_checker(s_num, s_ind, input_path):
     files = glob.glob(os.path.join(input_path, str(s_num) + '*'))
@@ -54,10 +56,21 @@ def input_check(q_1, q_2):
 
 def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder):
     q_1_assigned, q_2_assigned, q_3_assigned = input_check(q_1, q_2)
-    values_1 = f_1[q_1]
-    values_2 = f_1[q_2]
+    if q_1 == 'qx':
+        values_1 = f_1.q_x
+    if q_1 == 'qy':
+        values_1 = f_1.q_y
+    if q_1 == 'qz':
+        values_1 = f_1.q_z
+    if q_2 == 'qx':
+        values_2 = f_1.q_x
+    if q_2 == 'qz':
+        values_2 = f_1.q_y
+    if q_2 == 'qz':
+        values_2 = f_1.q_z
 
-    volume = np.array(f_1['data'])
+
+    volume = np.array(f_1.data)
 #    for i in range(volume.shape[0]):
 #        for j in range(volume.shape[1]):
 #            for k in range(volume.shape[2]):
@@ -119,22 +132,32 @@ def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder):
     n_qz = np.linspace(mesh_q_2_min, mesh_q_2_max, nr_fqz)
 
     #  FIGURE
-    fig, ax = plt.subplots(1, 1, figsize=(2, 2), dpi=500)
+    fig, ax = plt.subplots(figsize = (5,4), dpi = 128)
     #cb = img = ax.imshow(np.log10(grid_q), origin='lower', aspect=1,
     #                     extent=[mesh_q_2_min, mesh_q_2_max, mesh_q_1_min,
     #                         mesh_q_1_max], vmin=0, vmax=6,cmap='inferno')
-    cb = img = ax.contourf(np.log10(grid_q), origin='lower', aspect=1,           
-                         extent=[mesh_q_2_min, mesh_q_2_max, mesh_q_1_min,     
-                             mesh_q_1_max], vmin=0, vmax=6,cmap=cbar) 
-    plt.subplots_adjust(bottom=0.15, left=0.2)
-    ax.set_xlabel(r"$\rm Q_"+q_2[-1]+r"$ $(\rm\AA^{-1})$", fontsize=3)
-    ax.set_ylabel(r"$\rm Q_"+q_1[-1]+r"$ $(\rm\AA^{-1})$", fontsize=3)
-    ax.tick_params(axis='both', labelsize=3)
-    ax.xaxis.set_tick_params(width=0.3)
-    ax.yaxis.set_tick_params(width=0.3)
+    grid_q = np.log10(grid_q)
+    vmin = 1
+    vmax = 6
+    img = ax.contourf(grid_q, origin='lower',           
+                        extent=[mesh_q_2_min, mesh_q_2_max, mesh_q_1_min,mesh_q_1_max],
+            levels = 2048, vmin=vmin, vmax=vmax,
+                         cmap=cbar) 
+    ax.contour(np.log10(grid_q), origin='lower',         
+                    extent=[mesh_q_2_min, mesh_q_2_max, mesh_q_1_min,mesh_q_1_max],
+            levels = 256, colors = "#00305d", linewidths = 0.1, vmin = vmin)
+    cobar = fig.colorbar(
+                ScalarMappable(norm=img.norm, cmap=img.cmap),
+                ticks=range(vmin, vmax+1, 1))
+    cobar.ax.tick_params(size=0)
+    cobar.set_label('Log(Intensity) (A. U.)', rotation=270, labelpad = 30)
+    #plt.axis('square')
+    #plt.subplots_adjust(bottom=0.15, left=0.2)
+    ax.set_xlabel(r"\rm Q$_"+q_2[-1]+r"$ $(\rm\AA^{-1})$")
+    ax.set_ylabel(r"\rm Q$_"+q_1[-1]+r"$ $(\rm\AA^{-1})$")
     output_file_name = file_name[:-4] + '_Q' + q_1 + '_v_Q' + q_2
-    output_file_type = '.jpg'
-    # plt.savefig(existential_check(output_file_name, output_file_type, output_folder))
+    output_file_type = '.png'
+    plt.savefig(existential_check(output_file_name, output_file_type, output_folder), bbox_inches='tight')
 
     plt.show()
 

@@ -1,6 +1,124 @@
 import os
 import fabio
 import numpy as np
+"""
+Created on Wed Jan 11 14:51:58 2023
+
+@author: samseddon
+"""
+
+class Q_Space():
+    def __init__(self, scan_num, spot_dict, directory):
+        self.scan_num = scan_num
+        self.spot_dict = spot_dict
+        self.directory = directory
+        
+        self.qlim_dict = self.qlim()
+        
+        self.QX_MIN = self.qlim_dict["qx_min"]
+        self.QX_MAX = self.qlim_dict["qx_max"]
+        self.QY_MIN = self.qlim_dict["qy_min"]
+        self.QY_MAX = self.qlim_dict["qy_max"]
+        self.QZ_MIN = self.qlim_dict["qz_min"]
+        self.QZ_MAX = self.qlim_dict["qz_max"]
+        self.NR_PTS = self.qlim_dict["nr_pts"]
+
+
+        self.data = np.zeros((self.NR_PTS,                           
+                              self.NR_PTS,                           
+                              self.NR_PTS))                          
+        
+        self.q_idx = np.zeros((self.NR_PTS,                           
+                               self.NR_PTS,                           
+                               self.NR_PTS))                          
+
+
+        self.q_x = np.linspace(self.QX_MIN,                       
+                               self.QX_MAX,                       
+                               self.NR_PTS)                       
+                                                                               
+        self.q_y = np.linspace(self.QY_MIN,                       
+                               self.QY_MAX,                       
+                               self.NR_PTS)                       
+                                                                               
+        self.q_z = np.linspace(self.QZ_MIN,                       
+                               self.QZ_MAX,                       
+                               self.NR_PTS)
+
+
+    def normalise_3D(self):
+        for s in range(self.data.shape[0]):                                 
+            for t in range(self.data.shape[1]):                             
+                for u in range(self.data.shape[2]):                         
+                    if self.q_idx[s, t, u] == 0:                             
+                        pass                                                       
+                    else:                                                          
+                        self.data[s, t, u] = self.data[s, t, u] / self.q_idx[s, t, u]
+                                                                               
+
+
+
+    def qlim(self):
+        import_var = self.directory \
+                + "user_defined_parameters/qlim/qlim_" \
+                + self.spot_dict[str(self.scan_num[0])] \
+                + ".txt"
+
+        if os.path.exists(import_var) == False:
+            raise(ValueError("qlim file does not exist, consider running"\
+                         "again with create_files = True"))
+        with open(import_var,"r") as inf:
+            dict1 = eval(inf.read())
+        return dict1
+    
+    def populate_3D(self, dec_image):
+        for coordinate_1 in range(np.shape(dec_image.data)[1]):
+            for coordinate_2 in range(np.shape(dec_image.data)[0]):
+                Q_index = self.find_q_index(dec_image.Q_coords[coordinate_1][coordinate_2])
+                if Q_index[0] == False:
+                    pass
+                else:
+                    self.add_point_3D(Q_index[1], dec_image.data[coordinate_2][coordinate_1])
+
+    
+    def add_point_3D(self, indexes, data_point):
+        self.data[indexes[0], indexes[1], indexes[2]] = \
+                self.data[indexes[0], indexes[1], indexes[2]] + data_point
+        self.q_idx[indexes[0], indexes[1], indexes[2]] += 1
+
+    
+    def find_q_index(self, coord):
+        qx = coord[0]
+        qy = coord[1]
+        qz = coord[2]
+        if qx < self.QX_MIN \
+                or qx > self.QX_MAX \
+                or qy < self.QY_MIN \
+                or qy > self.QY_MAX \
+                or qz < self.QZ_MIN \
+                or qz > self.QZ_MAX:
+            return (False,[0,0,0])
+        else:
+            for i_x in range(len(self.q_x)):
+                if(qx > self.q_x[i_x]):
+                     pass
+                else:
+                    break
+
+            for i_y in range(len(self.q_y)):
+                if(qy > self.q_y[i_y]):
+                    pass
+                else:
+                    break
+
+            for i_z in range(len(self.q_z)):
+                if(qz > self.q_z[i_z]):
+                    pass
+                else:
+                    break
+            return (True, [i_x, i_y, i_z])
+
+
 
 class Dectris_Image():
     def __init__(self, file_reference, image_number, directory, master_files, param):
@@ -59,14 +177,20 @@ class Dectris_Image():
         self.Q_y = []
         self.Q_z = []
         self.Q_coords = []
+        self.omega_offsetter() # Tempory fix- Didier will help
 
         self.two_theta_horizontal_range = []
         self.two_theta_vertical_range = []
         self.generate_two_thetas() # Calculates range of two_theta
-        self.omega_offsetter() # Tempory fix- Didier will help
         self.slice_and_dice() # Chops out the dead rows and selects window
         self.file.close()
         self.calc_Q_coordinates()
+
+
+    def q_lim(self):
+        return (np.amin(self.Q_x), np.amax(self.Q_x)),\
+               (np.amin(self.Q_y), np.amax(self.Q_y)),\
+               (np.amin(self.Q_z), np.amax(self.Q_z))
 
 
     def calc_Q_coordinates(self):
@@ -115,8 +239,8 @@ class Dectris_Image():
     def generate_two_thetas(self):
         for pixel in range(self.param["ShotHeight"]):
             self.two_theta_horizontal_range.append(self.TWO_THETA 
-                                            + self.param["Zero_Pixel_Ver"] 
-                                            - float(pixel) 
+                                            + (self.param["Zero_Pixel_Ver"] 
+                                            - float(pixel)) 
                                             * self.param["det_ang"])
         for pixel in range(self.param["ShotHeight_y"]):
             self.two_theta_vertical_range.append((self.param['Zero_Pixel_Hor'] 
@@ -126,7 +250,7 @@ class Dectris_Image():
 
 
     def calc_qx(self, coordinate_1, coordinate_2): # c1 = i  c2 = j
-        return ((2 * np.pi / self.WAVELENGTH) 
+        qx = ((2 * np.pi / self.WAVELENGTH) 
                 * (np.cos(self.OMEGA / 180 * np.pi) 
                 - np.cos(self.two_theta_horizontal_range[coordinate_2] 
                         / 180 
@@ -137,10 +261,11 @@ class Dectris_Image():
                  * np.cos(self.two_theta_vertical_range[coordinate_1] 
                          / 180 
                          * np.pi)))
-   
+        return(qx) #0.02748846124221295
+
 
     def calc_qy(self, coordinate_1, coordinate_2):
-        return ((2 * np.pi / self.WAVELENGTH) 
+        qy =  ((2 * np.pi / self.WAVELENGTH) 
                 * np.sin(self.two_theta_vertical_range[coordinate_1] 
                         / 180 
                         * np.pi)
@@ -150,18 +275,19 @@ class Dectris_Image():
                         - self.OMEGA 
                         / 180 
                         * np.pi))
-
+        return qy 
     
     def calc_qz(self, coordinate_2):
-        return ((2 * np.pi / self.WAVELENGTH) 
+        qz =    ((2 * np.pi / self.WAVELENGTH) 
                 * (np.sin(self.OMEGA 
                          / 180 
-                         * np.pi)) 
+                         * np.pi) 
                 + np.sin(self.two_theta_horizontal_range[coordinate_2] 
                         / 180 
                         * np.pi 
                         - self.OMEGA 
                         / 180 
-                        * np.pi))
+                        * np.pi)))
+        return qz 
     
     

@@ -7,7 +7,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.patches as patches
-from dectris_class import Dectris_Image
+from dectris_class import *
+from colour_bar import code_TUD_cbar as cbar
+"""
+Created on Wed Jan 11 14:49:21 2023
+
+@author: samseddon
+"""
 
 def q_lim(spot_dict,
           scan_num,
@@ -256,7 +262,6 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
                     if int(c.split("_")[-2]) \
                     in scan_num]
     
-    start_t = time.time()
     temp= []
     mag = []
     
@@ -283,39 +288,71 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     limit_dict = []
     all_images = []
 
+    start_t = time.time()
     for image_number in range(len(master_files)):
         all_images.append(Dectris_Image(file_reference, 
                                         image_number, 
                                         directory, 
                                         master_files, 
                                         param))
+        #fig, ax = plt.subplots()
+        #ax.contourf(all_images[-1].data,cmap = cbar)
+        #plt.show()
         # print(all_images[-1].Q_coords)
-        q_unsorted_temp,limit_dict_temp = pixel_segmenter(image_number,
-                                                          directory, 
-                                                          master_files, 
-                                                          param, 
-                                                          start_t,
-                                                          temp,
-                                                          mag,
-                                                          file_reference)
-        q_unsorted.append(q_unsorted_temp)
-        limit_dict.append(limit_dict_temp)
+#        q_unsorted_temp,limit_dict_temp = pixel_segmenter(image_number,
+#                                                          directory, 
+#                                                          master_files, 
+#                                                          param, 
+#                                                          start_t,
+#                                                          temp,
+#                                                          mag,
+#                                                          file_reference)
+#        q_unsorted.append(q_unsorted_temp)
+#        limit_dict.append(limit_dict_temp)
+        #print(limit_dict_temp['pixel_qz'])
         progress_bar(image_number+1,len(master_files),start_t)
     
     print('\nFinding q limits from sliced data and optimising Q_space mesh')
+    qx_min = []
+    qy_min = []
+    qz_min = []
+    qx_max = []
+    qy_max = []
+    qz_max = []
+    q_min = []
+    for dec_image in all_images:
+        qx, qy, qz = dec_image.q_lim()
+        qx_min.append(qx[0])
+        qy_min.append(qy[0])
+        qz_min.append(qz[0])
+        qx_max.append(qx[1])
+        qy_max.append(qy[1])
+        qz_max.append(qz[1])
     
+    # NOTE here the qmax/qlim are found, needs to be put into a function.
+    print(np.amax(qx_max), np.amax(qy_max), np.amax(qz_max))
+    print(np.amin(qx_min), np.amin(qy_min), np.amin(qz_min))
+#    print(all_images[-1].file_reference)
+    #print(q_min[:][:][0])
+
     if create_files == True:
         find_q_lim(q_unsorted,directory,spot_dict,scan_num,limit_dict)
 
-    q_final,q_x_fin,q_y_fin,q_z_fin,qlim_dict = q_array_init(param, 
-                                                             spot_dict, 
-                                                             scan_num, 
-                                                             directory)
+    q_space = Q_Space(scan_num, spot_dict, directory)
+#    q_final,q_x_fin,q_y_fin,q_z_fin,qlim_dict = q_array_init(param, 
+#                                                             spot_dict, 
+#                                                             scan_num, 
+#                                                             directory)
     new_start_t = time.time()
     print('Populating Q_space with pixels')
-    
-    # NOTE These remain ugly as they are going to be put into a function soon
+#    for i in range(len(q_x_fin)):
+#        print(q_x_fin[i], q_space.q_x[i]) 
 
+    for _ in range(len(all_images)):
+        q_space.populate_3D(all_images[_])
+        progress_bar(_ + 1,len(master_files),new_start_t)
+    q_space.normalise_3D()
+    """    
     for k in range(len(q_unsorted)):
         for i in range(np.shape(q_unsorted[k])[1]):
             for j in range(np.shape(q_unsorted[k])[0]):
@@ -330,7 +367,6 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
                             q_final['q_data'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_z']]
                     q_final['q_idx'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_z']] =\
                             1 + q_final['q_idx'][q_index_dict['i_x'],q_index_dict['i_y'],q_index_dict['i_z']]
-        progress_bar(k+1,len(master_files),new_start_t)
 
 
     print('\n Normalising Q Space')
@@ -342,22 +378,20 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
                     pass
                 else:
                     q_final['q_data'][s, t, u] = q_final['q_data'][s, t, u] / q_final['q_idx'][s, t, u]
-
-
+    """
     orig_filename = str(scan_num[0])+'_new_3d_fill'
-    
     suffix = '.pickle'
     print(orig_filename) 
-    export = {  'qx':   q_final['q_x_axis'],\
-                'qy':   q_final['q_y_axis'],\
-                'qz':   q_final['q_z_axis'],\
-                'data': q_final['q_data']}
+#    export = {  'qx':   q_final['q_x_axis'],\
+#                'qy':   q_final['q_y_axis'],\
+#                'qz':   q_final['q_z_axis'],\
+#                'data': q_final['q_data']}
     new_filename = existential_check(orig_filename,
                                      suffix, 
                                      directory + 'processed_files/')
                                      
     with open(new_filename,'wb') as handle:
-        pickle.dump(export, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(q_space, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
     print("Complete, total duration: {}".format(int(time.time() 
                                                     - start_t))
@@ -644,14 +678,14 @@ def pixel_segmenter(k,
             qy_row.append(dict1['qy'])
 
         dict_of_data_and_coordinates.append(row)
-        qz.append(abs(max(qz_row) - min(qz_row)) / len(row))
-        qx.append(abs(max(qx_row) - min(qx_row)) / len(row))
+        qz.append(abs(max(qz_row)))
+        qx.append(abs(max(qx_row)))
         qy.append(np.average(qy_row))
-    
+
     limit_dict = {}
 
     limit_dict['pixel_qy'] = np.average(qy)
-    limit_dict['pixel_qz'] = np.average(qz)
+    limit_dict['pixel_qz'] = qz
     limit_dict['pixel_qx'] = np.average(qx)
     
     
