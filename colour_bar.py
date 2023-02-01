@@ -108,6 +108,7 @@ code_TUD_cbar = mpl.colors.LinearSegmentedColormap("code_TUD",
                         NonLinCdict(linear_dist(code_TUD), code_TUD))
 gwyddion_cbar = mpl.colors.LinearSegmentedColormap("gwyddion",
                         NonLinCdict(linear_dist(gwyddion), gwyddion))
+
 if __name__ == "__main__":
     fig, ax = plt.subplots(figsize=(6, 1))
     fig.subplots_adjust(bottom=0.5)

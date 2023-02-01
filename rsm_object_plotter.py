@@ -64,7 +64,7 @@ def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder):
         values_1 = f_1.q_z
     if q_2 == 'qx':
         values_2 = f_1.q_x
-    if q_2 == 'qz':
+    if q_2 == 'qy':
         values_2 = f_1.q_y
     if q_2 == 'qz':
         values_2 = f_1.q_z
@@ -141,11 +141,11 @@ def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder):
     vmax = 6
     img = ax.contourf(grid_q, origin='lower',           
                         extent=[mesh_q_2_min, mesh_q_2_max, mesh_q_1_min,mesh_q_1_max],
-            levels = 2048, vmin=vmin, vmax=vmax,
+            levels = 256, vmin=vmin, vmax=vmax,
                          cmap=cbar) 
     ax.contour(np.log10(grid_q), origin='lower',         
                     extent=[mesh_q_2_min, mesh_q_2_max, mesh_q_1_min,mesh_q_1_max],
-            levels = 256, colors = "#00305d", linewidths = 0.1, vmin = vmin)
+            levels = 64, colors = "#00305d", linewidths = 0.1, vmin = vmin)
     cobar = fig.colorbar(
                 ScalarMappable(norm=img.norm, cmap=img.cmap),
                 ticks=range(vmin, vmax+1, 1))
