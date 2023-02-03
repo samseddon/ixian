@@ -331,10 +331,9 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
         qz_max.append(qz[1])
    
    # NOTE here the qmax/qlim are found, needs to be put into a function.
-    print(np.amax(qx_max), np.amax(qy_max), np.amax(qz_max))
-    print(np.amin(qx_min), np.amin(qy_min), np.amin(qz_min))
-    print(all_images[-1].file_reference)
-   #print(q_min[:][:][0])
+   # print(np.amax(qx_max), np.amax(qy_max), np.amax(qz_max))
+   # print(np.amin(qx_min), np.amin(qy_min), np.amin(qz_min))
+   # print(all_images[-1].file_reference)
 
     if create_files == True:
         find_q_lim(q_unsorted,directory,spot_dict,scan_num,limit_dict)
@@ -355,7 +354,14 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     for _ in range(len(all_images)):
         q_space.populate_3D(all_images[_])
         progress_bar(_ + 1,len(master_files),new_start_t)
+
+
     q_space.normalise_3D()
+    # NOTE only do q_space.fix_qxz or q_space.fix_qxy, doing both is.. bad^{tm}
+
+     q_space.fix_qxz()
+    # q_space.fix_qxy()
+
 #    """    
 #    for k in range(len(q_unsorted)):
 #        for i in range(np.shape(q_unsorted[k])[1]):

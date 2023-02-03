@@ -1,7 +1,7 @@
 import os
 import fabio
 import time
-from equations import *
+from equations_old import *
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt

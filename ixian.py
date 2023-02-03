@@ -24,6 +24,24 @@ for i in range(len(scan_num)):
 
 
 file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index
+axis_1 = 'qy'
+axis_2 = 'qz'
+axis_3_limits = [1,240]
+
+f_1, f_name = file_checker(scan_num[0], file_index[0],directory + 'processed_files/')
+print('plotting', f_name)
+rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_folder+'images')
+
+file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index
+axis_1 = 'qx'
+axis_2 = 'qz'
+axis_3_limits = [1,240]
+
+f_1, f_name = file_checker(scan_num[0], file_index[0],directory + 'processed_files/')
+print('plotting', f_name)
+rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_folder+'images')
+
+file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index
 axis_1 = 'qx'
 axis_2 = 'qy'
 axis_3_limits = [1,240]

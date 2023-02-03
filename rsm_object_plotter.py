@@ -69,7 +69,7 @@ def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder):
     if q_2 == 'qz':
         values_2 = f_1.q_z
 
-
+    
     volume = np.array(f_1.data)
 #    for i in range(volume.shape[0]):
 #        for j in range(volume.shape[1]):
