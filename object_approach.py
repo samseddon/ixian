@@ -289,12 +289,15 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     all_images = []
 
     start_t = time.time()
+    total_list = []
     for image_number in range(len(master_files)):
         all_images.append(Dectris_Image(file_reference, 
                                         image_number, 
                                         directory, 
                                         master_files, 
                                         param))
+        for _ in range(len(all_images[-1].pixel_list)):
+            total_list.append(all_images[-1].pixel_list[_])
         #fig, ax = plt.subplots()
         #ax.contourf(all_images[-1].data,cmap = cbar)
         #plt.show()
@@ -338,7 +341,7 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     if create_files == True:
         find_q_lim(q_unsorted,directory,spot_dict,scan_num,limit_dict)
 
-    q_space = Q_Space(scan_num, spot_dict, directory)
+#    q_space = Q_Space(scan_num, spot_dict, directory)
 #    q_final,q_x_fin,q_y_fin,q_z_fin,qlim_dict = q_array_init(param, 
 #                                                             spot_dict, 
 #                                                             scan_num, 
@@ -351,15 +354,15 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
 #    for i in range(len(q_x_fin)):
 #        print(q_x_fin[i], q_space.q_x[i]) 
 
-    for _ in range(len(all_images)):
-        q_space.populate_3D(all_images[_])
-        progress_bar(_ + 1,len(master_files),new_start_t)
+#    for _ in range(len(all_images)):
+#        q_space.populate_3D(all_images[_])
+#        progress_bar(_ + 1,len(master_files),new_start_t)
 
 
-    q_space.normalise_3D()
+ #   q_space.normalise_3D()
     # NOTE only do q_space.fix_qxz or q_space.fix_qxy, doing both is.. bad^{tm}
 
-     q_space.fix_qxz()
+#    q_space.fix_qxz()
     # q_space.fix_qxy()
 
 #    """    
@@ -389,17 +392,18 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
 #                else:
 #                    q_final['q_data'][s, t, u] = q_final['q_data'][s, t, u] / q_final['q_idx'][s, t, u]
 #    """
-    orig_filename = str(scan_num[0])+'_new_3d_fill'
+    orig_filename = str(scan_num[0])+'_list_pixels'
     suffix = '.pickle'
 ##    export = {  'qx':   q_final['q_x_axis'],\
 ##                'qy':   q_final['q_y_axis'],\
 ##                'qz':   q_final['q_z_axis'],\
 ##                'data': q_final['q_data']}
+    print(all_images[0].pixel_list)
     new_filename = existential_check(orig_filename,
                                      suffix, 
-                                     directory + 'processed_files/')
+                                     'processed_files/')
     with open(new_filename,'wb') as handle:
-        pickle.dump(q_space, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(total_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
 #    
     print("Complete, total duration: {}".format(int(time.time() 
                                                     - start_t))

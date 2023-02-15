@@ -233,7 +233,7 @@ class Dectris_Image():
             self.MAG_FIELD = float(self.dict_motor['ami_mag'])
         else:
             self.MAG_FIELD = 0
-        
+        self.pixel_list = [] 
         self.data = []
         self.Q_x = []
         self.Q_y = []
@@ -256,12 +256,18 @@ class Dectris_Image():
 
 
     def calc_Q_coordinates(self):
+        
         for coordinate_1 in range(np.shape(self.data)[1]):
-            row = []
             row_x = []
             row_y = []
             row_z = []
+            row = []
             for coordinate_2 in range(np.shape(self.data)[0]):
+                self.pixel_list.append([self.calc_qx(coordinate_1, coordinate_2),
+                                 self.calc_qy(coordinate_1, coordinate_2),
+                                 self.calc_qz(coordinate_2),
+                                 self.data[coordinate_2, coordinate_1]])
+
                 row_x.append(self.calc_qx(coordinate_1, coordinate_2))
                 row_y.append(self.calc_qy(coordinate_1, coordinate_2))
                 row_z.append(self.calc_qz(coordinate_2))
