@@ -39,7 +39,7 @@ class Q_Space():
         self.QY_MAX = self.qlim_dict["qy_max"]
         self.QZ_MIN = self.qlim_dict["qz_min"]
         self.QZ_MAX = self.qlim_dict["qz_max"]
-        self.NR_PTS = 128
+        self.NR_PTS = self.qlim_dict["nr_pts"]
 
 
         self.data = np.zeros((self.NR_PTS,                           
@@ -262,6 +262,10 @@ class Dectris_Image():
             row_y = []
             row_z = []
             for coordinate_2 in range(np.shape(self.data)[0]):
+#                self.data = [self.calc_qx(coordinate_1, coordinate_2),
+#                             self.calc_qy(coordinate_1, coordinate_2),
+#                             self.calc_qz(coordinate_2),
+#                             self.data[coordinate_2][coordinate_1]]
                 row_x.append(self.calc_qx(coordinate_1, coordinate_2))
                 row_y.append(self.calc_qy(coordinate_1, coordinate_2))
                 row_z.append(self.calc_qz(coordinate_2))
@@ -270,7 +274,6 @@ class Dectris_Image():
             self.Q_y.append(row_y)
             self.Q_z.append(row_z)
             self.Q_coords.append(row)
-
 
     def omega_offsetter(self):
         if self.file_reference == "MAG001":

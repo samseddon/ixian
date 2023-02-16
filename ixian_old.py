@@ -14,7 +14,7 @@ from pixel_selection import data_fill
 directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/"                   
 output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/"
 file_reference = "MAG001"                                                      
-scan_num = [[195]]                                                             
+scan_num = [[194]]                                                             
                                                                                
                                                                                
                                                                                

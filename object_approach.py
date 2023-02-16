@@ -9,6 +9,7 @@ import seaborn as sns
 import matplotlib.patches as patches
 from dectris_class import *
 from colour_bar import code_TUD_cbar as cbar
+from volume_estimator import *
 """
 Created on Wed Jan 11 14:49:21 2023
 
@@ -261,7 +262,6 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     master_files = [c for c in master_files \
                     if int(c.split("_")[-2]) \
                     in scan_num]
-    
     temp= []
     mag = []
     
@@ -311,7 +311,10 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
 #        limit_dict.append(limit_dict_temp)
         #print(limit_dict_temp['pixel_qz'])
         progress_bar(image_number+1,len(master_files),start_t)
-     
+    # Here we estimate the size of 
+
+    del_Q_all = trident(all_images)
+    print(del_Q_all)
 
     print('\nFinding q limits from sliced data and optimising Q_space mesh')
     qx_min = []
@@ -330,13 +333,16 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
         qy_max.append(qy[1])
         qz_max.append(qz[1])
    
-   # NOTE here the qmax/qlim are found, needs to be put into a function.
-   # print(np.amax(qx_max), np.amax(qy_max), np.amax(qz_max))
-   # print(np.amin(qx_min), np.amin(qy_min), np.amin(qz_min))
+    # NOTE here the qmax/qlim are found, needs to be put into a function.
+    Q_max = [np.amax(qx_max), np.amax(qy_max), np.amax(qz_max)]
+    Q_min = [np.amin(qx_min), np.amin(qy_min), np.amin(qz_min)]
+
+
    # print(all_images[-1].file_reference)
 
     if create_files == True:
-        find_q_lim(q_unsorted,directory,spot_dict,scan_num,limit_dict)
+        Q_limit_dict_maker(directory, spot_dict, scan_num, Q_max, Q_min, del_Q_all)
+        #find_q_lim(q_unsorted,directory,spot_dict,scan_num,limit_dict)
 
     q_space = Q_Space(scan_num, spot_dict, directory)
 #    q_final,q_x_fin,q_y_fin,q_z_fin,qlim_dict = q_array_init(param, 
@@ -359,7 +365,7 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     q_space.normalise_3D()
     # NOTE only do q_space.fix_qxz or q_space.fix_qxy, doing both is.. bad^{tm}
 
-     q_space.fix_qxz()
+#    q_space.fix_qxz()
     # q_space.fix_qxy()
 
 #    """    
