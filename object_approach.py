@@ -287,7 +287,7 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     q_unsorted = []
     limit_dict = []
     all_images = []
-
+    total_list = []
     start_t = time.time()
     for image_number in range(len(master_files)):
         all_images.append(Dectris_Image(file_reference, 
@@ -295,7 +295,26 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
                                         directory, 
                                         master_files, 
                                         param))
-        #fig, ax = plt.subplots()
+        for _ in range(len(all_images[-1].pixel_list)):                             
+            total_list.append(all_images[-1].pixel_list[_])
+        progress_bar(image_number+1,len(master_files),start_t)
+    x = []
+    y = []
+    z = []
+    cts = []
+    points = []
+    
+    for _ in range(len(total_list)):                                                     
+            points.append((total_list[_][0],total_list[_][2]))                                     
+            x.append(total_list[_][0])                                                       
+            y.append(total_list[_][1])                                                       
+            z.append(total_list[_][2])                                                       
+            cts.append(total_list[_][3])
+
+    print(min(int(np.unique(np.round(x,3))),
+              int(np.unique(np.round(y,3))),
+              int(np.unique(np.round(z,3)))))
+#fig, ax = plt.subplots()
         #ax.contourf(all_images[-1].data,cmap = cbar)
         #plt.show()
         # print(all_images[-1].Q_coords)
@@ -310,7 +329,6 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
 #        q_unsorted.append(q_unsorted_temp)
 #        limit_dict.append(limit_dict_temp)
         #print(limit_dict_temp['pixel_qz'])
-        progress_bar(image_number+1,len(master_files),start_t)
     # Here we estimate the size of 
 
     del_Q_all = trident(all_images)

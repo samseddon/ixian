@@ -41,7 +41,7 @@ class Q_Space():
         self.QZ_MAX = self.qlim_dict["qz_max"]
         self.NR_PTS = self.qlim_dict["nr_pts"]
 
-
+        self.NR_PTS = 84
         self.data = np.zeros((self.NR_PTS,                           
                               self.NR_PTS,                           
                               self.NR_PTS))                          
@@ -239,6 +239,7 @@ class Dectris_Image():
         self.Q_y = []
         self.Q_z = []
         self.Q_coords = []
+        self.pixel_list = []
         self.omega_offsetter() # Tempory fix- Didier will help
 
         self.two_theta_horizontal_range = []
@@ -262,6 +263,10 @@ class Dectris_Image():
             row_y = []
             row_z = []
             for coordinate_2 in range(np.shape(self.data)[0]):
+                self.pixel_list.append([self.calc_qx(coordinate_1, coordinate_2),
+                                 self.calc_qy(coordinate_1, coordinate_2),
+                                 self.calc_qz(coordinate_2),
+                                 self.data[coordinate_2, coordinate_1]])
 #                self.data = [self.calc_qx(coordinate_1, coordinate_2),
 #                             self.calc_qy(coordinate_1, coordinate_2),
 #                             self.calc_qz(coordinate_2),

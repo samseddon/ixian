@@ -16,14 +16,14 @@ file_reference = "MAG001"
 scan_num = [194]
 
 
-# NOTE test data entered here 
-file_reference = "aV2O3R1"
-directory = "/home/sseddon/Desktop/500GB/Data/XMaS/test_data/"
-output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/test_data/processed_files/"
-scan_num = [418,419]
+## NOTE test data entered here 
+#file_reference = "aV2O3R1"
+#directory = "/home/sseddon/Desktop/500GB/Data/XMaS/test_data/"
+#output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/test_data/processed_files/"
+#scan_num = [418,419]
 
 
-data_fill(directory, output_folder, file_reference, scan_num, create_files = True)
+data_fill(directory, output_folder, file_reference, scan_num, create_files = False)
 
 
 
