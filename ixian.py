@@ -23,7 +23,7 @@ scan_num = [194]
 #scan_num = [418,419]
 
 
-data_fill(directory, output_folder, file_reference, scan_num, create_files = False)
+data_fill(directory, output_folder, file_reference, scan_num, create_files = True)
 
 
 

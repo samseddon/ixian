@@ -60,24 +60,24 @@ def max_spacing_middle(Q_1, Q_2):
                abs(Q_2[mid_coord2][mid_coord1]-Q_1[mid_coord2][mid_coord1])])
 
 
-def Q_limit_dict_maker(directory, spot_dict, scan_num, Q_max, Q_min, del_Q_all):
+def Q_limit_dict_maker(directory, spot_dict, scan_num, Q_max, Q_min, NR_PTS):
     qlim_dict = {'qz_min' : Q_min[2],
                   'qz_max' : Q_max[2],
                   'qx_min' : Q_min[0],
                   'qx_max' : Q_max[0],
                   'qy_min' : Q_min[1],
                   'qy_max' : Q_max[1]}
-    q_x_lim_min = del_Q_all[0]
-    q_y_lim_min = del_Q_all[1]
-    q_z_lim_min = del_Q_all[2]
-    nr_pts = 1 
-    while abs(qlim_dict['qx_max']-qlim_dict['qx_min'])/nr_pts > q_x_lim_min \
-      and abs(qlim_dict['qy_max']-qlim_dict['qy_min'])/nr_pts > q_y_lim_min \
-      and abs(qlim_dict['qz_max']-qlim_dict['qz_min'])/nr_pts > q_z_lim_min:
-              nr_pts = nr_pts + 1                                              
-                                                                               
-    qlim_dict['nr_pts'] = int(nr_pts *2.5)  
-    print(nr_pts)
+#    q_x_lim_min = del_Q_all[0]
+#    q_y_lim_min = del_Q_all[1]
+#    q_z_lim_min = del_Q_all[2]
+#    nr_pts = 1 
+#    while abs(qlim_dict['qx_max']-qlim_dict['qx_min'])/nr_pts > q_x_lim_min \
+#      and abs(qlim_dict['qy_max']-qlim_dict['qy_min'])/nr_pts > q_y_lim_min \
+#      and abs(qlim_dict['qz_max']-qlim_dict['qz_min'])/nr_pts > q_z_lim_min:
+#              nr_pts = nr_pts + 1                                              
+#                                                                               
+    qlim_dict['nr_pts'] = int(0.75*NR_PTS)  
+
     filename = directory\
                + 'user_defined_parameters/qlim/qlim_'\
                + spot_dict[str(scan_num[0])]\

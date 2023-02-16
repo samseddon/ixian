@@ -311,9 +311,11 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
             z.append(total_list[_][2])                                                       
             cts.append(total_list[_][3])
 
-    print(min(int(np.unique(np.round(x,3))),
-              int(np.unique(np.round(y,3))),
-              int(np.unique(np.round(z,3)))))
+    NR_PTS = (min(len(np.unique(np.round(x,3))),
+                  len(np.unique(np.round(y,3))),
+                  len(np.unique(np.round(z,3)))))
+
+
 #fig, ax = plt.subplots()
         #ax.contourf(all_images[-1].data,cmap = cbar)
         #plt.show()
@@ -331,8 +333,8 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
         #print(limit_dict_temp['pixel_qz'])
     # Here we estimate the size of 
 
-    del_Q_all = trident(all_images)
-    print(del_Q_all)
+#    del_Q_all = trident(all_images)
+#    print(del_Q_all)
 
     print('\nFinding q limits from sliced data and optimising Q_space mesh')
     qx_min = []
@@ -359,7 +361,7 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
    # print(all_images[-1].file_reference)
 
     if create_files == True:
-        Q_limit_dict_maker(directory, spot_dict, scan_num, Q_max, Q_min, del_Q_all)
+        Q_limit_dict_maker(directory, spot_dict, scan_num, Q_max, Q_min, NR_PTS)
         #find_q_lim(q_unsorted,directory,spot_dict,scan_num,limit_dict)
 
     q_space = Q_Space(scan_num, spot_dict, directory)

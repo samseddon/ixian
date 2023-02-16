@@ -41,7 +41,7 @@ class Q_Space():
         self.QZ_MAX = self.qlim_dict["qz_max"]
         self.NR_PTS = self.qlim_dict["nr_pts"]
 
-        self.NR_PTS = 84
+#        self.NR_PTS = 84
         self.data = np.zeros((self.NR_PTS,                           
                               self.NR_PTS,                           
                               self.NR_PTS))                          
