@@ -54,6 +54,16 @@ def input_check(q_1, q_2):
         print('Integrating along x axis')
     return axis_dict[q_1], axis_dict[q_2], integrate_axis
 
+
+
+
+
+
+
+
+
+
+
 def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder):
     q_1_assigned, q_2_assigned, q_3_assigned = input_check(q_1, q_2)
     if q_1 == 'qx':

@@ -13,7 +13,7 @@ from interplot_2 import twod_plot
 directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/"    
 output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/"
 file_reference = "MAG001"
-scan_num = [167]
+scan_num = [152]
 
 
 ## NOTE test data entered here 
