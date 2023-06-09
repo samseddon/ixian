@@ -54,13 +54,64 @@ def input_check(q_1, q_2):
         print('Integrating along x axis')
     return axis_dict[q_1], axis_dict[q_2], integrate_axis
 
+def slicer_and_dicer_3000(f_1, file_name, q_1, q_2, q_3, output_folder):
+    volume = np.array(f_1.data)
+    q_x = np.array(f_1.q_x)
+    q_y = np.array(f_1.q_y)
+    q_z = np.array(f_1.q_z)
 
 
+    # Test array init
+    axis0 = []
 
+    for i in range(100):
+        axis1 = []
+        for j in range(100):
+            axis2 = []
+            for k in range(100):
+                axis2.append(1)
+            axis1.append(axis2)
+        axis0.append(axis1)
+    
 
+    Q_vec = np.array([1,1,1])
 
+    Q_vec_perp1 = np.random.randn(3)
+    Q_vec_perp1 -= Q_vec_perp1.dot(Q_vec) * Q_vec / np.linalg.norm(Q_vec)**2
+    Q_vec_perp1 /= np.linalg.norm(Q_vec_perp1)
+    Q_vec_perp2 = np.cross(Q_vec, Q_vec_perp1)
+    
+    d_1 = 0
+    d_2 = 0 
 
+    Q_init_1 = [0,0,0]
+    Q_init_2 = [1,1,1]
+    pass_num = 0 
+    c = 0
+    test = []
+    while c<100:
+        pass_num = 0 
+        for i in range(5):
+            for j in range(5): 
+                for k in range(5): 
+                    #print(i, j, k, "Planes", plane(Q_vec, Q_init_1, i, j, k) ,  plane(Q_vec, Q_init_2, i, j, k))
+                    low_plane = plane(Q_vec, Q_init_1, i, j, k)
+                    hig_plane = plane(Q_vec, Q_init_2, i, j, k)
+                    if low_plane >= 0 and low_plane <= (sum(Q_vec)) and hig_plane <= 0:
+                        pass_num +=1
+        
+        test.append([c, pass_num])
+        c += 1
+        Q_init_1 = Q_init_1 + Q_vec
+        print(Q_init_1)
+        Q_init_2 = Q_init_2 + Q_vec
+        print(Q_init_2)
+    print(test)
 
+def plane(Q_vec, Q_init, x, y, z): 
+    return Q_vec[0] * x + Q_vec[1]* y + Q_vec[2] * z - (Q_vec[0] * Q_init[0] + Q_vec[1] * Q_init[1]+ Q_vec[2] * Q_init[2]) 
+
+    
 
 
 

@@ -1,7 +1,7 @@
 #from rsm_plot_pickle import file_checker, rsm_plot
 #from pixel_selection import data_fill
 
-from rsm_object_plotter import file_checker,  rsm_plot
+from rsm_object_plotter import file_checker,  rsm_plot, slicer_and_dicer_3000
 from object_approach import data_fill
 from interplot_2 import twod_plot
 ##
@@ -23,31 +23,41 @@ scan_num = [152]
 #scan_num = [418,419]
 
 
-data_fill(directory, output_folder, file_reference, scan_num, create_files = True)
+#data_fill(directory, output_folder, file_reference, scan_num, create_files = True)
+
 
 
 
 file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index
-axis_1 = 'qx'
-axis_2 = 'qz'
-axis_3_limits = [1,240]
+#axis_1 = 'qx'
+#axis_2 = 'qz'
+#axis_3_limits = [1,240]
+##
+#f_1, f_name = file_checker(scan_num[0], file_index[0],directory + 'processed_files/')
+#print('plotting', f_name)
+#rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_folder+'images')
 #
-f_1, f_name = file_checker(scan_num[0], file_index[0],directory + 'processed_files/')
-print('plotting', f_name)
-rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_folder+'images')
+#axis_1 = 'qy'
+#axis_2 = 'qz'
+#axis_3_limits = [1,240]
+##
+#f_1, f_name = file_checker(scan_num[0], file_index[0],directory + 'processed_files/')
+#print('plotting', f_name)
+#rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_folder+'images')
+#
+#axis_1 = 'qx'
+#axis_2 = 'qy'
+#axis_3_limits = [1,240]
+##
+#f_1, f_name = file_checker(scan_num[0], file_index[0],directory + 'processed_files/')
+#print('plotting', f_name)
+#rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_folder+'images')
 
-axis_1 = 'qy'
-axis_2 = 'qz'
-axis_3_limits = [1,240]
-#
-f_1, f_name = file_checker(scan_num[0], file_index[0],directory + 'processed_files/')
-print('plotting', f_name)
-rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_folder+'images')
 
-axis_1 = 'qx'
-axis_2 = 'qy'
-axis_3_limits = [1,240]
-#
+#_____________SAM adds plotting code here __________#
+
+
 f_1, f_name = file_checker(scan_num[0], file_index[0],directory + 'processed_files/')
-print('plotting', f_name)
-rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_folder+'images')
+slicer_and_dicer_3000(f_1, f_name, "qx", "qy", "qz", output_folder)
+
+
