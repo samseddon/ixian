@@ -1,7 +1,7 @@
 #from rsm_plot_pickle import file_checker, rsm_plot
 #from pixel_selection import data_fill
-
-from rsm_object_plotter import file_checker,  rsm_plot, slicer_and_dicer_3000
+import numpy as np
+from rsm_object_plotter import file_checker,  rsm_plot, slicer_and_dicer_3000, test_slicer
 from object_approach import data_fill
 from interplot_2 import twod_plot
 ##
@@ -13,7 +13,6 @@ from interplot_2 import twod_plot
 directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/"    
 output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/"
 file_reference = "MAG001"
-scan_num = [152]
 
 
 ## NOTE test data entered here 
@@ -55,9 +54,16 @@ file_index = [-1] #for most recent processed data just put -1, otherwise 0 will 
 
 
 #_____________SAM adds plotting code here __________#
+Q_vec = np.array([2.66,0.0,5.41])
+#test_slicer(Q_vec)
+scan_num = [52,182,102]
+for i in range(len(scan_num)):
+    if i == 6: 
+        pass
+    else:
+        print(scan_num[i])
+        f_1, f_name = file_checker(scan_num[i], file_index[0],directory + 'processed_files/')
+        slicer_and_dicer_3000(f_1, f_name, Q_vec, output_folder, scan_num[i])
 
-
-f_1, f_name = file_checker(scan_num[0], file_index[0],directory + 'processed_files/')
-slicer_and_dicer_3000(f_1, f_name, "qx", "qy", "qz", output_folder)
-
-
+#f_1, f_name = file_checker(scan_num[1], file_index[0],directory + 'processed_files/')
+#slicer_and_dicer_3000(f_1, f_name, Q_vec, output_folder, scan_num[1])

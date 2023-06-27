@@ -1,6 +1,8 @@
 import pickle   
+import pprint as pp
 import os
 import glob
+import time
 import numpy as np
 from nexusformat import nexus
 from matplotlib.cm import ScalarMappable
@@ -54,27 +56,137 @@ def input_check(q_1, q_2):
         print('Integrating along x axis')
     return axis_dict[q_1], axis_dict[q_2], integrate_axis
 
-def slicer_and_dicer_3000(f_1, file_name, q_1, q_2, q_3, output_folder):
+
+
+def slicer_and_dicer_3000(f_1, file_name, Q_vec, output_folder, scan_num):
     volume = np.array(f_1.data)
     q_x = np.array(f_1.q_x)
     q_y = np.array(f_1.q_y)
     q_z = np.array(f_1.q_z)
+    limits = np.shape(volume)
+    idx_test = []
+    for i in range(limits[0]):
+        idx1 = []
+        for j in range(limits[1]):
+            idx2 = []
+            for k in range(limits[2]):
+                idx2.append(0)
+            idx1.append(idx2)
+        idx_test.append(idx1)
 
+    xrange = (max(q_x) - min(q_x)) 
+    yrange = (max(q_y) - min(q_y)) 
+    zrange = (max(q_z) - min(q_z)) 
+    Q_norm = [0,0,0]                                                                           
+                                                                                                                     
+                                              
+    Q_norm[0] = float(Q_vec[0])/xrange
+    Q_norm[1] = float(Q_vec[1])/yrange
+    Q_norm[2] = float(Q_vec[2])/zrange
+    max_val = max(Q_norm)
+    Q_real = []
+    for _ in range(len(Q_norm)):
+        Q_norm[_] = Q_norm[_]/max_val
+        Q_real.append(Q_norm[_])
+    
+    alpha = np.dot([min(q_x),min(q_y),min(q_z)], Q_vec) / (np.sqrt((Q_vec[0]**2 + Q_vec[1] **2 + Q_vec[2]**2)) **2)
+    print(Q_norm)
+    Q_init_1 = [0,0,0]
+    Q_init_2 = [0,0,0]
+    print(Q_init_1)
+    for _ in range(len(Q_init_1)):
+        Q_init_2[_] = Q_init_1[_] + Q_norm[_]
+    print(Q_init_2)
+    c = 0
+    test = []
+    integral = []
+    size = max(np.shape(volume))
+    start_time = time.time()
+    while c<size:
+#    while c<size:
+        if np.average(idx_test) == 1:
+            break
+        else:
+            Q_real[0] =  alpha * Q_vec[0] + c * (Q_norm[0] * xrange/size)
+            Q_real[1] =  alpha * Q_vec[1] + c * (Q_norm[1] * yrange/size)
+            Q_real[2] =  alpha * Q_vec[2] + c * (Q_norm[2] * zrange/size)
 
-    # Test array init
-    axis0 = []
-
-    for i in range(100):
-        axis1 = []
-        for j in range(100):
-            axis2 = []
-            for k in range(100):
-                axis2.append(1)
-            axis1.append(axis2)
-        axis0.append(axis1)
+            #print((time.time() - start_time)/60)
+            checker = []
+            pass_num = 0 
+            plane_count = 0
+            for i in range(size):
+           #     print("i = ", i)
+                for j in range(size): 
+                    for k in range(size): 
+                        if idx_test[i][j][k] == 1:
+                            checker.append(1)
+                            pass
+                        else:
+                           # print(i, j, k, "Planes", plane_check(Q_norm, Q_init_1, [i, j, k]) ,  plane_check(Q_norm, Q_init_2, [i, j, k]))
+                            low_plane = plane_check(Q_norm, Q_init_1, ([i-Q_norm[0],j-Q_norm[1],k-Q_norm[2]]))
+                            hig_plane = plane_check(Q_norm, Q_init_2, ([i+Q_norm[0],j+Q_norm[1],k+Q_norm[2]]))
+                  #          print(i,j,k,[i,j,k]-Q_vec,low_plane, hig_plane)
+                            if low_plane < 0 and hig_plane >= 0:
+    #                            print('here')
+                                pass_num +=1
+                                idx_test[i][j][k] = 1
+                                plane_count += volume[i][j][k]
+            #                pp.pprint(idx_test)
+            # This is extra
+            #pass_num = 1
+            #plane_count = 1
+            # This is normal again
+            print("pass_num = ", pass_num)
+            print("plane_count =", plane_count)
+            integral.append([c, plane_count])
+            test.append([np.sqrt(Q_real[0]**2 + Q_real[1]**2 + Q_real[2]**2), pass_num])
+            c += 1
+            print(np.average(idx_test))
+            #print(c)
+            #print(len(checker))
+            for _ in range(len(Q_init_1)):
+                Q_init_1[_] = Q_init_1[_] + Q_norm[_]
+                Q_init_2[_] = Q_init_2[_] + Q_norm[_]
+            
+            print(c, Q_init_1)
+            print(c, Q_init_2)
+    x = []
+    y = []
+    print(integral, test)
+    for i in range(len(test)):
+        x.append(test[i][0])
+        if test[i][1] != 0:
+            y.append(integral[i][1]/test[i][1])
+        else:
+            y.append(0)
+    print(x, y)
+    np.savetxt("krys_scans/" + str(scan_num) + 'x.txt', x)
+    np.savetxt("krys_scans/" + str(scan_num) + 'y.txt', y)
+    #plt.plot(x,y)
+    #plt.close()
     
 
-    Q_vec = np.array([1,1,1])
+def test_slicer(Q_vec):
+    axis0 = []
+    idx_test = []
+    size = 40
+
+    for i in range(size):
+        axis1 = []
+        idx1 = []
+        for j in range(size):
+            idx2 = []
+            axis2 = []
+            for k in range(size):
+                idx2.append(0)
+                axis2.append(10)
+            axis1.append(axis2)
+            idx1.append(idx2)
+        axis0.append(axis1)
+        idx_test.append(idx1)
+     
+    #Q_vec = np.array([1.4,1.2,0.3])
 
     Q_vec_perp1 = np.random.randn(3)
     Q_vec_perp1 -= Q_vec_perp1.dot(Q_vec) * Q_vec / np.linalg.norm(Q_vec)**2
@@ -85,31 +197,48 @@ def slicer_and_dicer_3000(f_1, file_name, q_1, q_2, q_3, output_folder):
     d_2 = 0 
 
     Q_init_1 = [0,0,0]
-    Q_init_2 = [1,1,1]
+    Q_init_2 = Q_init_1 + Q_vec
     pass_num = 0 
     c = 0
     test = []
-    while c<100:
+    while c<size:
+        checker = []
         pass_num = 0 
-        for i in range(5):
-            for j in range(5): 
-                for k in range(5): 
+        for i in range(size):
+            for j in range(size): 
+                for k in range(size): 
+                    if idx_test[i][j][k] == 1:
+                        checker.append(1)
+                        pass
+                    else:
                     #print(i, j, k, "Planes", plane(Q_vec, Q_init_1, i, j, k) ,  plane(Q_vec, Q_init_2, i, j, k))
-                    low_plane = plane(Q_vec, Q_init_1, i, j, k)
-                    hig_plane = plane(Q_vec, Q_init_2, i, j, k)
-                    if low_plane >= 0 and low_plane <= (sum(Q_vec)) and hig_plane <= 0:
-                        pass_num +=1
+                        low_plane = plane_check(Q_vec, Q_init_1, ([i,j,k]-Q_vec))
+                        hig_plane = plane_check(Q_vec, Q_init_2, ([i,j,k]+Q_vec))
+              #          print(i,j,k,[i,j,k]-Q_vec,low_plane, hig_plane)
+                        if low_plane < 0 and hig_plane >= 0:
+                            pass_num +=1
+                            idx_test[i][j][k] = 1
+            #                pp.pprint(idx_test)
         
         test.append([c, pass_num])
         c += 1
+        print(np.average(idx_test))
+        #print(c)
+        #print(len(checker))
         Q_init_1 = Q_init_1 + Q_vec
-        print(Q_init_1)
+        #print(c, Q_init_1)
         Q_init_2 = Q_init_2 + Q_vec
-        print(Q_init_2)
-    print(test)
+        #print(c, Q_init_2)
+    x = []
+    y = []
+    for point in test:
+        x.append(point[0])
+        y.append(point[1])
+    plt.plot(x,y)
+    plt.show()
 
-def plane(Q_vec, Q_init, x, y, z): 
-    return Q_vec[0] * x + Q_vec[1]* y + Q_vec[2] * z - (Q_vec[0] * Q_init[0] + Q_vec[1] * Q_init[1]+ Q_vec[2] * Q_init[2]) 
+def plane_check(Q_vec, Q_init, Q_test): 
+    return (Q_vec[0] * Q_test[0] + Q_vec[1]* Q_test[1] + Q_vec[2] * Q_test[2] - (Q_vec[0] * Q_init[0] + Q_vec[1] * Q_init[1]+ Q_vec[2] * Q_init[2]))/(Q_vec[0] + Q_vec[1] + Q_vec[2])
 
     
 
