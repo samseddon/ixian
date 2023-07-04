@@ -233,13 +233,13 @@ def find_q_lim(q,directory,spot_dict,scan_num,limit_dict):
                + spot_dict[str(scan_num[0])]\
                + '.txt'
     
-    if os.path.exists(filename) == True \
-        and input('Overwrite existing file, [y] or n?\n') != 'y':
-            pass
-    else:
-       with open(filename,'w') as inf:
-          inf.write(str(q_limits_with_n_pts))
-       print('Created file',filename)
+    #if os.path.exists(filename) == True \
+    #    and input('Overwrite existing file, [y] or n?\n') != 'y':
+    #        pass
+    #else:
+    with open(filename,'w') as inf:
+        inf.write(str(q_limits_with_n_pts))
+    print('Created file',filename)
 
 
 def data_fill(directory,output_folder,file_reference,scan_num,create_files):
@@ -262,6 +262,7 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     master_files = [c for c in master_files \
                     if int(c.split("_")[-2]) \
                     in scan_num]
+    
     temp= []
     mag = []
     
@@ -271,6 +272,11 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     print('\nCreating parameter files')
     
     if create_files == True:
+        filename = directory\
+                   + 'user_defined_parameters/qlim/qlim_'\
+                   + spot_dict[str(scan_num[0])]\
+                   + '.txt'
+        
         parameter_setup(directory,
                         master_files, 
                         file_reference,
@@ -281,7 +287,7 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     param = param_read(spot_dict,
                        scan_num[0],
                        directory)
-    
+        
     print('\nSlicing images and calulating pixel Q values..')
     
     q_unsorted = []
@@ -423,7 +429,7 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
 ##                'data': q_final['q_data']}
     new_filename = existential_check(orig_filename,
                                      suffix, 
-                                     directory + 'processed_files/')
+                                     directory + 'processed_files_july23/')
     with open(new_filename,'wb') as handle:
         pickle.dump(q_space, handle, protocol=pickle.HIGHEST_PROTOCOL)
 #    
@@ -543,195 +549,188 @@ def parameter_setup(directory,
                + '/user_defined_parameters/param/param_' \
                + spot_dict[str(scan_num[0])] \
                + '.txt' 
-    if os.path.exists(filename) == True \
-        and input('Overwrite existing '
-                  + spot_dict[str(scan_num[0])]
-                  + ' file, [y] or n?\n')\
-            != 'y':
-        pass
-    else:
-        with open('setup/standard_param.txt', 'r') as inf:
-            gen_param = eval(inf.read())
     
-        REALX_LIM_LOW = gen_param['realx_lim_low'] 
-        REALX_LIM_HIG = gen_param['realx_lim_hig']
-        REALY_LIM_LOW = gen_param['realy_lim_low']
-        REALY_LIM_HIG = gen_param['realy_lim_hig']
+    with open('setup/standard_param.txt', 'r') as inf:
+        gen_param = eval(inf.read())
+    
+    REALX_LIM_LOW = gen_param['realx_lim_low'] 
+    REALX_LIM_HIG = gen_param['realx_lim_hig']
+    REALY_LIM_LOW = gen_param['realy_lim_low']
+    REALY_LIM_HIG = gen_param['realy_lim_hig']
 
-        k = int(len(master_files)/4)
-        f = fabio.open(os.path.join(directory+'data/', master_files[k]))
-        f1 = f.data
-        f.close()
-        
-        k = int(len(master_files)/2)
-        f = fabio.open(os.path.join(directory+'data/', master_files[k]))
-        f2 = f.data    
-        f.close()
-        
-        k = int(3*len(master_files)/4)
-        f = fabio.open(os.path.join(directory+'data/', master_files[k]))
-        f3 = f.data    
-        f.close()
-        
-        fig = plt.figure(figsize = (12,3))
-        fig.add_subplot(131)
-        
-        ax = sns.heatmap(f1)
-        ax.add_patch(patches.Rectangle(
-            (REALX_LIM_LOW, REALY_LIM_LOW),
-            REALX_LIM_HIG-REALX_LIM_LOW,
-            REALX_LIM_HIG-REALX_LIM_LOW,
-            edgecolor='red',
-            fill=False,
-            lw=2))
-        fig.add_subplot(132)
-        ax = sns.heatmap(f2)
-        ax.add_patch(patches.Rectangle(
-            (REALX_LIM_LOW, REALY_LIM_LOW),
-            REALX_LIM_HIG-REALX_LIM_LOW,
-            REALX_LIM_HIG-REALX_LIM_LOW,
-            edgecolor='red',
-            fill=False,
-            lw=2))
-        fig.add_subplot(133)
-        ax = sns.heatmap(f3)
-        ax.add_patch(patches.Rectangle(
-            (REALX_LIM_LOW, REALY_LIM_LOW),
-            REALX_LIM_HIG-REALX_LIM_LOW,
-            REALX_LIM_HIG-REALX_LIM_LOW,
-            edgecolor='red',
-            fill=False,
-            lw=2))
-        plt.show()
-
-        with open(filename,'w') as inf:
-            inf.write(str(gen_param))
-        print('Created file',
-              filename,
-              '\n Change slice region in parameter file')
-
-
-
-def pixel_segmenter(k,
-                    directory, 
-                    master_files,
-                    param,
-                    start_t,
-                    temp,
-                    mag,
-                    file_reference):
-    '''This function gets given the relevant files, one at time, opens them 
-    and strips the header, it slices out  the data as defined in parameter 
-    files, and outputs back an array item in scan numbers  of dictionaries 
-    of the pixels data points and their q_x,q_y and q_z coordinates. It also 
-    returns any relevant motor/counter positions for any scans that aren't 
-    just an RSM/eta scan, such as an ascan field or temperature
-           Parameters: 
-               k(int)                 : looping variable function is looped 
-                                        over corresponding to each scan
-               directory(string)      : string pointing to data directory 
-               master_files(list)     : list of files for given scan number
-               param(dict)            : dictionary of general spot parameters 
-               start_t(float)         : time function first called for 
-                                        progress bar
-               temp(list)             : list of temperature of scan
-               mag(list)              : list of magnetic field of scan
-               file_reference(string) : unique file identifier for a given 
-           Returns:
-               dict_of_data_and_coordinates : list of dictionaries containing 
-                                              pixel data and q space 
-                                              coordinate
-               limit_dict                   : dictionary of size of average 
-                                              size of pixels in qspace to 
-                                              avoid striping
-    '''
+    k = int(len(master_files)/4)
     f = fabio.open(os.path.join(directory+'data/', master_files[k]))
-
-    count_head, motor_head, ub, wavelength = header_strip(f) 
- 
-    attn        =   float(count_head['attn'])
-    trans       =   float(count_head['trans'])
-    io          =   float(count_head['Io'])
-    temp.append(    float(count_head['temp_B']))
-
-    two_theta   =   float(motor_head['del'])
-    omega       =   float(motor_head['eta'])
-    chi         =   float(motor_head['chi'])   
-    phi         =   float(motor_head['phi'])   
-   
-    if motor_head['ami_mag'] in motor_head:
-        mag.append(float(motor_head['ami_mag']))
-        
-    two_theta_range = np.array(generate_two_thetas(two_theta,param))
-    two_theta_h_range = np.array(qy_angle(param))#
-    
-    omega = omega_offsetter(omega,file_reference,phi)
-    
-    realx_lim_low = param['realx_lim_low']
-    realx_lim_hig = param['realx_lim_hig']
-    realy_lim_low = param['realy_lim_low']
-    realy_lim_hig = param['realy_lim_hig']
-
-    f_cut,\
-    two_theta_range_new,\
-    two_theta_h_range = dead_pixel(f,
-                                   param,
-                                   two_theta_range,
-                                   two_theta_h_range,
-                                   realx_lim_low,
-                                   realx_lim_hig,
-                                   realy_lim_low,
-                                   realy_lim_hig)
-    
+    f1 = f.data
     f.close()
-    dict_of_data_and_coordinates = []
-    qz = []
-    qx = []
-    qy = []
-    for i in range(np.shape(f_cut)[1]):
-        row = []
-        qz_row = []
-        qy_row = []
-        qx_row = []
-        for j in range(np.shape(f_cut)[0]):
-            dict1 = {}
-            dict1['data']=f_cut[j,i]
-            dict1['qx'] = calc_qx(two_theta_range_new[j], 
-                                  omega,
-                                  wavelength,
-                                  two_theta_h_range[i])
-            dict1['qy'] = calc_qy(two_theta_range_new[j],
-                                  omega, 
-                                  wavelength, 
-                                  two_theta_h_range[i])
-            dict1['qz'] = calc_qz(two_theta_range_new[j],
-                                  omega,
-                                  wavelength)
-
-            row.append(dict1)
-            qz_row.append(dict1['qz'])
-            qx_row.append(dict1['qx'])
-            qy_row.append(dict1['qy'])
-
-        dict_of_data_and_coordinates.append(row)
-        qz.append(abs(max(qz_row)))
-        qx.append(abs(max(qx_row)))
-        qy.append(np.average(qy_row))
-
-    limit_dict = {}
-
-    limit_dict['pixel_qy'] = np.average(qy)
-    limit_dict['pixel_qz'] = qz
-    limit_dict['pixel_qx'] = np.average(qx)
     
+    k = int(len(master_files)/2)
+    f = fabio.open(os.path.join(directory+'data/', master_files[k]))
+    f2 = f.data    
+    f.close()
     
-    return dict_of_data_and_coordinates, limit_dict
+    k = int(3*len(master_files)/4)
+    f = fabio.open(os.path.join(directory+'data/', master_files[k]))
+    f3 = f.data    
+    f.close()
+    
+#    fig = plt.figure(figsize = (12,3))
+#    fig.add_subplot(131)
+#    
+#    ax = sns.heatmap(f1)
+#    ax.add_patch(patches.Rectangle(
+#        (REALX_LIM_LOW, REALY_LIM_LOW),
+#        REALX_LIM_HIG-REALX_LIM_LOW,
+#        REALX_LIM_HIG-REALX_LIM_LOW,
+#        edgecolor='red',
+#        fill=False,
+#        lw=2))
+#    fig.add_subplot(132)
+#    ax = sns.heatmap(f2)
+#    ax.add_patch(patches.Rectangle(
+#        (REALX_LIM_LOW, REALY_LIM_LOW),
+#        REALX_LIM_HIG-REALX_LIM_LOW,
+#        REALX_LIM_HIG-REALX_LIM_LOW,
+#        edgecolor='red',
+#        fill=False,
+#        lw=2))
+#    fig.add_subplot(133)
+#    ax = sns.heatmap(f3)
+#    ax.add_patch(patches.Rectangle(
+#        (REALX_LIM_LOW, REALY_LIM_LOW),
+#        REALX_LIM_HIG-REALX_LIM_LOW,
+#        REALX_LIM_HIG-REALX_LIM_LOW,
+#        edgecolor='red',
+#        fill=False,
+#        lw=2))
+
+    with open(filename,'w') as inf:
+        inf.write(str(gen_param))
+    print('Created file',
+          filename,
+          '\n Change slice region in parameter file')
 
 
-directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/"
-output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/"
-file_reference = "MAG001"
-scan_num = [180]
+
+#def pixel_segmenter(k,
+#                    directory, 
+#                    master_files,
+#                    param,
+#                    start_t,
+#                    temp,
+#                    mag,
+#                    file_reference):
+#    '''This function gets given the relevant files, one at time, opens them 
+#    and strips the header, it slices out  the data as defined in parameter 
+#    files, and outputs back an array item in scan numbers  of dictionaries 
+#    of the pixels data points and their q_x,q_y and q_z coordinates. It also 
+#    returns any relevant motor/counter positions for any scans that aren't 
+#    just an RSM/eta scan, such as an ascan field or temperature
+#           Parameters: 
+#               k(int)                 : looping variable function is looped 
+#                                        over corresponding to each scan
+#               directory(string)      : string pointing to data directory 
+#               master_files(list)     : list of files for given scan number
+#               param(dict)            : dictionary of general spot parameters 
+#               start_t(float)         : time function first called for 
+#                                        progress bar
+#               temp(list)             : list of temperature of scan
+#               mag(list)              : list of magnetic field of scan
+#               file_reference(string) : unique file identifier for a given 
+#           Returns:
+#               dict_of_data_and_coordinates : list of dictionaries containing 
+#                                              pixel data and q space 
+#                                              coordinate
+#               limit_dict                   : dictionary of size of average 
+#                                              size of pixels in qspace to 
+#                                              avoid striping
+#    '''
+#    f = fabio.open(os.path.join(directory+'data/', master_files[k]))
+#
+#    count_head, motor_head, ub, wavelength = header_strip(f) 
+# 
+#    attn        =   float(count_head['attn'])
+#    trans       =   float(count_head['trans'])
+#    io          =   float(count_head['Io'])
+#    temp.append(    float(count_head['temp_B']))
+#
+#    two_theta   =   float(motor_head['del'])
+#    omega       =   float(motor_head['eta'])
+#    chi         =   float(motor_head['chi'])   
+#    phi         =   float(motor_head['phi'])   
+#   
+#    if motor_head['ami_mag'] in motor_head:
+#        mag.append(float(motor_head['ami_mag']))
+#        
+#    two_theta_range = np.array(generate_two_thetas(two_theta,param))
+#    two_theta_h_range = np.array(qy_angle(param))#
+#    
+#    omega = omega_offsetter(omega,file_reference,phi)
+#    
+#    realx_lim_low = param['realx_lim_low']
+#    realx_lim_hig = param['realx_lim_hig']
+#    realy_lim_low = param['realy_lim_low']
+#    realy_lim_hig = param['realy_lim_hig']
+#
+#    f_cut,\
+#    two_theta_range_new,\
+#    two_theta_h_range = dead_pixel(f,
+#                                   param,
+#                                   two_theta_range,
+#                                   two_theta_h_range,
+#                                   realx_lim_low,
+#                                   realx_lim_hig,
+#                                   realy_lim_low,
+#                                   realy_lim_hig)
+#    
+#    f.close()
+#    dict_of_data_and_coordinates = []
+#    qz = []
+#    qx = []
+#    qy = []
+#    for i in range(np.shape(f_cut)[1]):
+#        row = []
+#        qz_row = []
+#        qy_row = []
+#        qx_row = []
+#        for j in range(np.shape(f_cut)[0]):
+#            dict1 = {}
+#            dict1['data']=f_cut[j,i]
+#            dict1['qx'] = calc_qx(two_theta_range_new[j], 
+#                                  omega,
+#                                  wavelength,
+#                                  two_theta_h_range[i])
+#            dict1['qy'] = calc_qy(two_theta_range_new[j],
+#                                  omega, 
+#                                  wavelength, 
+#                                  two_theta_h_range[i])
+#            dict1['qz'] = calc_qz(two_theta_range_new[j],
+#                                  omega,
+#                                  wavelength)
+#
+#            row.append(dict1)
+#            qz_row.append(dict1['qz'])
+#            qx_row.append(dict1['qx'])
+#            qy_row.append(dict1['qy'])
+#
+#        dict_of_data_and_coordinates.append(row)
+#        qz.append(abs(max(qz_row)))
+#        qx.append(abs(max(qx_row)))
+#        qy.append(np.average(qy_row))
+#
+#    limit_dict = {}
+#
+#    limit_dict['pixel_qy'] = np.average(qy)
+#    limit_dict['pixel_qz'] = qz
+#    limit_dict['pixel_qx'] = np.average(qx)
+#    
+#    
+#    return dict_of_data_and_coordinates, limit_dict
+
+
+#directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/"
+#output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/"
+#file_reference = "MAG001"
+#scan_num = [180]
 
 #data_fill(directory, output_folder, file_reference, scan_num, create_files = False)
 #q_check(directory,scan_num)

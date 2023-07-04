@@ -83,11 +83,10 @@ def Q_limit_dict_maker(directory, spot_dict, scan_num, Q_max, Q_min, NR_PTS):
                + spot_dict[str(scan_num[0])]\
                + '.txt'                                                        
                                                                                
-    if os.path.exists(filename) == True \
-        and input('Overwrite existing file, [y] or n?\n') != 'y':              
-            pass                                                               
-    else:                                                                      
-       with open(filename,'w') as inf:                                         
-          inf.write(str(qlim_dict))                                  
-       print('Created file',filename)                                          
+#    if os.path.exists(filename) == True \
+#        and input('Overwrite existing file, [y] or n?\n') != 'y':              
+#            pass                                                               
+    with open(filename,'w') as inf:                                         
+        inf.write(str(qlim_dict))                                  
+    print('Created file',filename)                                          
 

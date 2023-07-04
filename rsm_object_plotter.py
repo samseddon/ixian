@@ -244,7 +244,7 @@ def plane_check(Q_vec, Q_init, Q_test):
 
 
 
-def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder):
+def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder, directory, scan_num):
     q_1_assigned, q_2_assigned, q_3_assigned = input_check(q_1, q_2)
     if q_1 == 'qx':
         values_1 = f_1.q_x
@@ -258,8 +258,10 @@ def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder):
         values_2 = f_1.q_y
     if q_2 == 'qz':
         values_2 = f_1.q_z
+    with open(directory+'user_defined_parameters/spot_dict.txt','r') as inf:
+        spot_dict = eval(inf.read())
 
-    
+    spot = spot_dict[str(scan_num[0])]
     volume = np.array(f_1.data)
 #    for i in range(volume.shape[0]):
 #        for j in range(volume.shape[1]):
@@ -345,11 +347,12 @@ def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder):
     #plt.subplots_adjust(bottom=0.15, left=0.2)
     ax.set_xlabel(r"\rm Q$_"+q_2[-1]+r"$ $(\rm\AA^{-1})$")
     ax.set_ylabel(r"\rm Q$_"+q_1[-1]+r"$ $(\rm\AA^{-1})$")
-    output_file_name = file_name[:-4] + '_Q' + q_1 + '_v_Q' + q_2
+    ax.set_title(spot)
+    output_file_name = file_name[:-7] + q_1 + '_v_' + q_2
     output_file_type = '.png'
     plt.savefig(existential_check(output_file_name, output_file_type, output_folder), bbox_inches='tight')
 
-    plt.show()
+    plt.close()
 
 
 

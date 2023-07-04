@@ -219,8 +219,8 @@ class Dectris_Image():
                 self.dict_motor[key] = value
                 self.motor_pos.remove(value)
                 break
-        for key in self.dict_count:
-            print(key)
+#        for key in self.dict_count:
+#            print(key)
         self.ATTN        =   float(self.dict_count['attn']) 
         self.TRANS       =   float(self.dict_count['trans'])
         self.IO          =   float(self.dict_count['Io'])   
