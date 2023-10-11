@@ -1,5 +1,6 @@
 #from rsm_plot_pickle import file_checker, rsm_plot
 import os
+import inspect
 #from pixel_selection import data_fill
 import numpy as np
 from rsm_object_plotter import file_checker,  rsm_plot, slicer_and_dicer_3000, test_slicer
@@ -26,6 +27,11 @@ file_reference = "MAG001"
 
 
 
+""" 
+All these steps are for running the code through every file that is there
+"""
+"""
+Uncomment me first! 
 
 file_check = os.listdir(directory+"data/")
 scan_nums = []
@@ -54,7 +60,7 @@ print(scans_final)
 for scan_num in scans_final:
     try:
         print(scan_num)
-        data_fill(directory, output_folder, file_reference, scan_num, create_files = True)
+#        data_fill(directory, output_folder, file_reference, scan_num, create_files = True)
         file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index
         axis_1 = 'qx'
         axis_2 = 'qz'
@@ -85,8 +91,18 @@ for scan_num in scans_final:
 
     except:
         continue
+"""
 
-
+scan_num = [152]
+data_fill(directory, output_folder, file_reference, scan_num, create_files = True)
+file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index
+axis_1 = 'qx'
+axis_2 = 'qz'
+axis_3_limits = [1,240]
+##
+f_1, f_name = file_checker(scan_num, file_index[0],directory + 'processed_files_july23/')
+print('plotting', f_name)
+rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_folder+'images/', directory, scan_num)
 
 
 

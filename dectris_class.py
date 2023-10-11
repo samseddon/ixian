@@ -1,4 +1,5 @@
 import os
+import inspect
 import fabio
 import numpy as np
 """
@@ -6,24 +7,6 @@ Created on Wed Jan 11 14:51:58 2023
 
 @author: samseddon
 """
-
-#class Q_Space():
-#    def __init__(self):
-#        self.data = []
-#        self.Q_x = []
-#        self.Q_y = []
-#        self.Q_z = []
-#
-#
-#    def add_image(self, image):
-#
-#        self.data.append(image.data)
-#        self.Q_x.append(image.Q_x)
-#        self.Q_y.append(image.Q_y)
-#        self.Q_z.append(image.Q_z)
-
-
-
 
 class Q_Space():
     def __init__(self, scan_num, spot_dict, directory):
@@ -65,6 +48,10 @@ class Q_Space():
 
 
     def normalise_3D(self):
+        print("Function" \
+            + str(inspect.currentframe()).split(",")[-1][5:-1] \
+            + " called from"\
+            + str(inspect.currentframe()).split(",")[1])
         for s in range(self.data.shape[0]):                                 
             for t in range(self.data.shape[1]):                             
                 for u in range(self.data.shape[2]):                         
@@ -73,53 +60,6 @@ class Q_Space():
                         pass
                     else:
                         self.data[s, t, u] = self.data[s, t, u] / self.q_idx[s, t, u]
-# X_Z WORKS
-
-    def fix_qxz(self):
-        fix_idx = 1
-        fix_val = 0
-        for s in range(self.data.shape[0]):                                 
-            for t in range(self.data.shape[1]):                             
-                for u in range(self.data.shape[2]):                         
-                    if self.q_idx[s, t, u] != 0:
-                        fix_idx = self.q_idx[s, t, u]
-                        fix_val = self.data[s, t, u]
-                    if self.q_idx[s, t, u] == 0:                             
-                        self.q_idx[s, t, u] = 0
-                        self.data[s, t, u] =fix_val
-
-    def fix_qxy(self): 
-        fix_idx = 1
-        fix_val = 0
-        for u in range(self.data.shape[2]):                         
-            for s in range(self.data.shape[0]):                                 
-                for t in range(self.data.shape[1]):                             
-                    if self.q_idx[s, t, u] != 0:
-                        fix_idx = self.q_idx[s, t, u]
-                        fix_val = self.data[s, t, u]
-                    if self.q_idx[s, t, u] == 0:                             
-                        self.q_idx[s, t, u] = 0
-                        self.data[s, t, u] =fix_val
-
-
-
-# YZ doesn't work :( 
-
-#        fix_idx = 1
-#        fix_val = 0
-#        for u in range(self.data.shape[1]):                             
-#            for t in range(self.data.shape[2]):                         
-#                for s in range(self.data.shape[0]):                                 
-#                    if            self.q_idx[s, t, u] != 0:
-#                        fix_idx = self.q_idx[s, t, u]
-#                        fix_val = self.data[s, t, u]
-#                    if  self.q_idx[s, t, u] == 0:                             
-#                        self.q_idx[s, t, u] = 0
-#                        self.data[s, t, u] =fix_val
-                                                                              
-                                                                               
-
-
     def qlim(self):
         import_var = self.directory \
                 + "user_defined_parameters/qlim/qlim_" \

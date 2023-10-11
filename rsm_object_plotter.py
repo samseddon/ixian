@@ -1,4 +1,5 @@
 import pickle   
+import inspect
 import pprint as pp
 import os
 import glob
@@ -13,6 +14,12 @@ from colour_bar import code_TUD_cbar as cbar
 plt.style.use("seddon_TUD") 
 
 def file_checker(s_num, s_ind, input_path):
+    """
+    """
+    print("Function" \
+            + str(inspect.currentframe()).split(",")[-1][5:-1] \
+            + " called from"\
+            + str(inspect.currentframe()).split(",")[1])
     files = glob.glob(os.path.join(input_path, str(s_num) + '*'))
     file_name = max(files, key=os.path.getctime)
     file_name = file_name[len(input_path):]
@@ -30,17 +37,13 @@ def file_checker(s_num, s_ind, input_path):
              read_file = pickle.load(handle)
     return read_file, file_name
 
-#def existential_check(o_f, f_s, folder): #file name, file suffix, destination folder
-#    f_n = str(o_f + f_s)
-#    while os.path.exists(folder + f_n):
-#        if len(f_n) > len(o_f + f_s):
-#            filenum = int(f_n[(len(o_f + f_s) - (len(f_s)-1)):-len(f_s)]) + 1
-#            f_n = f_n[:(len(o_f + f_s) - (len(f_s)-1))] + str(filenum) + f_n[-len(f_s):]
-#        else:
-#            f_n = f_n[:-len(f_s)] + '_1' + f_n[-len(f_s):]
-#    return folder + f_n
-
 def input_check(q_1, q_2):
+    """
+    """
+    print("Function" \
+            + str(inspect.currentframe()).split(",")[-1][5:-1] \
+            + " called from"\
+            + str(inspect.currentframe()).split(",")[1])
     axis_dict = {'qx': 0, 'qX': 0, 'qy': 1, 'qY': 1, 'qz': 2, 'qZ': 2}
     if q_1 not in axis_dict or q_2 not in axis_dict:
         print('Axis not recognised, please use qx, qy, qz, T, or M')
@@ -59,6 +62,13 @@ def input_check(q_1, q_2):
 
 
 def slicer_and_dicer_3000(f_1, file_name, Q_vec, output_folder, scan_num):
+    """
+    """
+    print("Function" \
+            + str(inspect.currentframe()).split(",")[-1][5:-1] \
+            + " called from"\
+            + str(inspect.currentframe()).split(",")[1])
+    
     volume = np.array(f_1.data)
     q_x = np.array(f_1.q_x)
     q_y = np.array(f_1.q_y)
@@ -168,7 +178,12 @@ def slicer_and_dicer_3000(f_1, file_name, Q_vec, output_folder, scan_num):
     
 
 def test_slicer(Q_vec):
-    axis0 = []
+    """
+    """
+    print("Function" \
+            + str(inspect.currentframe()).split(",")[-1][5:-1] \
+            + " called from"\
+            + str(inspect.currentframe()).split(",")[1])
     idx_test = []
     size = 40
 
@@ -238,14 +253,35 @@ def test_slicer(Q_vec):
     plt.show()
 
 def plane_check(Q_vec, Q_init, Q_test): 
+    """
+    """
+    print("Function" \
+            + str(inspect.currentframe()).split(",")[-1][5:-1] \
+            + " called from"\
+            + str(inspect.currentframe()).split(",")[1])
+
     return (Q_vec[0] * Q_test[0] + Q_vec[1]* Q_test[1] + Q_vec[2] * Q_test[2] - (Q_vec[0] * Q_init[0] + Q_vec[1] * Q_init[1]+ Q_vec[2] * Q_init[2]))/(Q_vec[0] + Q_vec[1] + Q_vec[2])
 
+
+def rsm_plot(f_1, 
+             file_name, 
+             q_1, 
+             q_2, 
+             q_3_lim, 
+             output_folder, 
+             directory, 
+             scan_num, 
+             show_plot = True):
     
+    """
+    """
+    print("Function" \
+            + str(inspect.currentframe()).split(",")[-1][5:-1] \
+            + " called from"\
+            + str(inspect.currentframe()).split(",")[1])
 
-
-
-def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder, directory, scan_num):
     q_1_assigned, q_2_assigned, q_3_assigned = input_check(q_1, q_2)
+
     if q_1 == 'qx':
         values_1 = f_1.q_x
     if q_1 == 'qy':
@@ -351,23 +387,9 @@ def rsm_plot(f_1, file_name, q_1, q_2, q_3_lim, output_folder, directory, scan_n
     output_file_name = file_name[:-7] + q_1 + '_v_' + q_2
     output_file_type = '.png'
     plt.savefig(existential_check(output_file_name, output_file_type, output_folder), bbox_inches='tight')
-
-    plt.close()
-
-
-
-
-#scan = [180]
-#file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index
-#axis_1 = 'qx'
-#axis_2 = 'qy'
-#axis_3_limits= [0,-1]
-#axis_3_limits = [1,35]
-#data_directory = '/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/'
-#output_directory = '/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files/images'
-#
-#
-#f_1, f_name = file_checker(scan[0], file_index[0],data_directory)
-#rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_directory)
+    if show_plot == True:
+        plt.show()
+    else:
+        plt.close()
 
 
