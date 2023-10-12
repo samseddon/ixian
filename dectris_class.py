@@ -1,8 +1,10 @@
 import os
 import inspect
 import fabio
+import math
 import numpy as np
 from numba import jit
+from equations import calc_qx, calc_qy, calc_qz
 """
 Created on Wed Jan 11 14:51:58 2023
 
@@ -24,6 +26,9 @@ class Q_Space():
         self.QZ_MIN = self.qlim_dict["qz_min"]
         self.QZ_MAX = self.qlim_dict["qz_max"]
         self.NR_PTS = self.qlim_dict["nr_pts"]
+        self.QX_GRAD = (self.QX_MAX-self.QX_MIN) / (self.NR_PTS - 1)
+        self.QY_GRAD = (self.QY_MAX-self.QY_MIN) / (self.NR_PTS - 1)
+        self.QZ_GRAD = (self.QZ_MAX-self.QZ_MIN) / (self.NR_PTS - 1)
 
 #        self.NR_PTS = 84
         self.data = np.zeros((self.NR_PTS,                           
@@ -77,13 +82,31 @@ class Q_Space():
     def populate_3D(self, dec_image):
         for coordinate_1 in range(np.shape(dec_image.data)[1]):
             for coordinate_2 in range(np.shape(dec_image.data)[0]):
-                Q_index = self.find_q_index(dec_image.Q_coords[coordinate_1][coordinate_2])
+#                Q_index_1 = self.find_q_index(dec_image.Q_coords[coordinate_1][coordinate_2])
+                Q_index = self.find_q_linear(dec_image.Q_coords[coordinate_1][coordinate_2])
                 if Q_index[0] == False:
                     pass
                 else:
                     self.add_point_3D(Q_index[1], dec_image.data[coordinate_2][coordinate_1])
 
-    
+    def find_q_linear(self, coord):
+        qx = coord[0]
+        qy = coord[1]
+        qz = coord[2]
+        if qx < self.QX_MIN \
+                or qx >= self.QX_MAX \
+                or qy < self.QY_MIN \
+                or qy >= self.QY_MAX \
+                or qz < self.QZ_MIN \
+                or qz >= self.QZ_MAX:
+            return (False,[0,0,0])
+        else:
+            return(True, [math.floor((qx-self.QX_MIN)/self.QX_GRAD)+1,
+                          math.floor((qy-self.QY_MIN)/self.QY_GRAD)+1,
+                          math.floor((qz-self.QZ_MIN)/self.QZ_GRAD)+1])
+           
+        
+
     def add_point_3D(self, indexes, data_point):
         self.data[indexes[0], indexes[1], indexes[2]] = \
                 self.data[indexes[0], indexes[1], indexes[2]] + data_point
@@ -204,18 +227,16 @@ class Dectris_Image():
             row_x = []
             row_y = []
             row_z = []
+
             for coordinate_2 in range(np.shape(self.data)[0]):
-                self.pixel_list.append([self.calc_qx(coordinate_1, coordinate_2),
-                                 self.calc_qy(coordinate_1, coordinate_2),
-                                 self.calc_qz(coordinate_2),
+                self.pixel_list.append([calc_qx(self.WAVELENGTH, self.OMEGA, self.two_theta_horizontal_range[coordinate_2], self.two_theta_vertical_range[coordinate_1]),
+                                 calc_qy(self.WAVELENGTH, self.OMEGA, self.two_theta_horizontal_range[coordinate_2], self.two_theta_vertical_range[coordinate_1]),
+                                 calc_qz(self.WAVELENGTH, self.OMEGA, self.two_theta_horizontal_range[coordinate_2]),
                                  self.data[coordinate_2, coordinate_1]])
-#                self.data = [self.calc_qx(coordinate_1, coordinate_2),
-#                             self.calc_qy(coordinate_1, coordinate_2),
-#                             self.calc_qz(coordinate_2),
-#                             self.data[coordinate_2][coordinate_1]]
-                row_x.append(self.calc_qx(coordinate_1, coordinate_2))
-                row_y.append(self.calc_qy(coordinate_1, coordinate_2))
-                row_z.append(self.calc_qz(coordinate_2))
+
+                row_x.append(self.pixel_list[-1][0])
+                row_y.append(self.pixel_list[-1][1])
+                row_z.append(self.pixel_list[-1][2])
                 row.append([row_x[-1], row_y[-1], row_z[-1]])
             self.Q_x.append(row_x)
             self.Q_y.append(row_y)
@@ -260,47 +281,5 @@ class Dectris_Image():
                                                   - float(pixel)) 
                                                  * self.param['det_ang'])
 
-    @jit    
-    def calc_qx(self, coordinate_1, coordinate_2): # c1 = i  c2 = j
-        qx = ((2 * np.pi / self.WAVELENGTH) 
-                * (np.cos(self.OMEGA / 180 * np.pi) 
-                - np.cos(self.two_theta_horizontal_range[coordinate_2] 
-                        / 180 
-                        * np.pi 
-                        - self.OMEGA 
-                        / 180 
-                        * np.pi)
-                 * np.cos(self.two_theta_vertical_range[coordinate_1] 
-                         / 180 
-                         * np.pi)))
-        return(qx) #0.02748846124221295
-
-#    @jit    
-    def calc_qy(self, coordinate_1, coordinate_2):
-        qy =  ((2 * np.pi / self.WAVELENGTH) 
-                * np.sin(self.two_theta_vertical_range[coordinate_1] 
-                        / 180 
-                        * np.pi)
-                * np.cos(self.two_theta_horizontal_range[coordinate_2] 
-                        / 180 
-                        * np.pi 
-                        - self.OMEGA 
-                        / 180 
-                        * np.pi))
-        return qy 
-    
-#    @jit    
-    def calc_qz(self, coordinate_2):
-        qz =    ((2 * np.pi / self.WAVELENGTH) 
-                * (np.sin(self.OMEGA 
-                         / 180 
-                         * np.pi) 
-                + np.sin(self.two_theta_horizontal_range[coordinate_2] 
-                        / 180 
-                        * np.pi 
-                        - self.OMEGA 
-                        / 180 
-                        * np.pi)))
-        return qz 
     
     
