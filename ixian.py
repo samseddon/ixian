@@ -1,11 +1,9 @@
-#from rsm_plot_pickle import file_checker, rsm_plot
 import os
 import inspect
 #from pixel_selection import data_fill
 import numpy as np
 from rsm_object_plotter import file_checker,  rsm_plot, slicer_and_dicer_3000, test_slicer
 from object_approach import data_fill
-from interplot_2 import twod_plot
 ##
 
 ## MAKE SURE DATA, WHEREVER IT IS, IS IN A FOLDER CALLED MATERIAL/DATA (IE magnetite/data) and also in magnetite is a folder called user_defined_parameters, as before
@@ -94,7 +92,7 @@ for scan_num in scans_final:
 """
 
 scan_num = [152]
-data_fill(directory, output_folder, file_reference, scan_num, create_files = True)
+data_fill(directory, output_folder, file_reference, scan_num, create_files = False)
 file_index = [-1] #for most recent processed data just put -1, otherwise 0 will do the first or its index
 axis_1 = 'qx'
 axis_2 = 'qz'

@@ -2,7 +2,6 @@ import numpy as np
 from colorama import Fore
 import time
 import os
-import inspect
 
 
 # Calculate qx from 2theta, eta, and wavelength
@@ -22,7 +21,6 @@ def calc_qz(twoTheta, eta, wvl):
 def calc_qy(twoTheta, eta, wvl, angle_y):
     qy = (2 * np.pi / wvl) * np.sin(angle_y / 180 * np.pi) \
          * np.cos(twoTheta / 180 * np.pi - eta / 180 * np.pi)
-    
     return qy
 
 #def index_grid(Param_dict):  # This is the grid that keeps track of how mnay elements are being put into each Q voxel.    # Identical size to Q volume
@@ -77,10 +75,6 @@ def progress_bar(progress, total,start_t): #here progress is an integer for a lo
         print(Fore.GREEN + f"\r|{bar}| {percent:.2f}%" , end = ", took "+str(int(time_elapsed))+ " seconds "+ Fore.RESET + "\n\n") 
 
 def existential_check(o_f, f_s, folder): #file name, file suffix, destination folder
-    print("Function" \
-        + str(inspect.currentframe()).split(",")[-1][5:-1] \
-        + " called from"\
-        + str(inspect.currentframe()).split(",")[1])
     f_n = str(o_f + f_s)
     while os.path.exists(folder + f_n):
         if len(f_n) > len(o_f + f_s):
@@ -89,5 +83,3 @@ def existential_check(o_f, f_s, folder): #file name, file suffix, destination fo
         else:
             f_n = f_n[:-len(f_s)] + '_1' + f_n[-len(f_s):]
     return folder + f_n 
-
-
