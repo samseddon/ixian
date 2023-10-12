@@ -87,15 +87,11 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     x = []
     y = []
     z = []
-    cts = []
-    points = []
     
     for _ in range(len(total_list)):                                                     
-            points.append((total_list[_][0],total_list[_][2]))                                     
             x.append(total_list[_][0])                                                       
             y.append(total_list[_][1])                                                       
             z.append(total_list[_][2])                                                       
-            cts.append(total_list[_][3])
 
     NR_PTS = (min(len(np.unique(np.round(x,3))),
                   len(np.unique(np.round(y,3))),
@@ -123,7 +119,12 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     Q_max = [np.amax(qx_max), np.amax(qy_max), np.amax(qz_max)]
     Q_min = [np.amin(qx_min), np.amin(qy_min), np.amin(qz_min)]
 
-    if create_files == True:
+    if create_files == True or os.path.exists("local/qlim"\
+                                             + "qlim_"\
+                                             + str(scan_num[0])\
+                                             + ".txt")\
+                                             == False: 
+                        
         Q_limit_dict_maker(directory, spot_dict, scan_num, Q_max, Q_min, NR_PTS)
 
     q_space = Q_Space(scan_num, spot_dict, directory)
@@ -156,25 +157,17 @@ def Q_limit_dict_maker(directory, spot_dict, scan_num, Q_max, Q_min, NR_PTS):
                   'qx_max' : Q_max[0],                                         
                   'qy_min' : Q_min[1],                                         
                   'qy_max' : Q_max[1]}                                         
-#    q_x_lim_min = del_Q_all[0]                                                
-#    q_y_lim_min = del_Q_all[1]                                                
-#    q_z_lim_min = del_Q_all[2]                                                
-#    nr_pts = 1                                                                
-#    while abs(qlim_dict['qx_max']-qlim_dict['qx_min'])/nr_pts > q_x_lim_min \ 
-#      and abs(qlim_dict['qy_max']-qlim_dict['qy_min'])/nr_pts > q_y_lim_min \ 
-#      and abs(qlim_dict['qz_max']-qlim_dict['qz_min'])/nr_pts > q_z_lim_min:  
-#              nr_pts = nr_pts + 1                                              
-#                                                                               
+    
     qlim_dict['nr_pts'] = int(0.75*NR_PTS)                                     
-                                                                               
-    filename = directory\
-               + 'user_defined_parameters/qlim/qlim_'\
-               + spot_dict[str(scan_num[0])]\
-               + '.txt'                                                        
-                                                                               
-#    if os.path.exists(filename) == True \                                     
-#        and input('Overwrite existing file, [y] or n?\n') != 'y':              
-#            pass                                                               
+    qlim_dir = "local/qlim/"
+   
+    if os.path.exists(qlim_dir) == False:
+        os.makedirs(qlim_dir)
+    filename = qlim_dir\
+               + "qlim_"\
+               + str(scan_num[0])\
+               + ".txt"                                                        
+                                                                           
     with open(filename,'w') as inf:                                            
         inf.write(str(qlim_dict))                                              
     print('Created file',filename)   

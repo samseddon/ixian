@@ -2,6 +2,7 @@ import os
 import inspect
 import fabio
 import numpy as np
+from numba import jit
 """
 Created on Wed Jan 11 14:51:58 2023
 
@@ -259,7 +260,7 @@ class Dectris_Image():
                                                   - float(pixel)) 
                                                  * self.param['det_ang'])
 
-
+    @jit    
     def calc_qx(self, coordinate_1, coordinate_2): # c1 = i  c2 = j
         qx = ((2 * np.pi / self.WAVELENGTH) 
                 * (np.cos(self.OMEGA / 180 * np.pi) 
@@ -274,7 +275,7 @@ class Dectris_Image():
                          * np.pi)))
         return(qx) #0.02748846124221295
 
-
+#    @jit    
     def calc_qy(self, coordinate_1, coordinate_2):
         qy =  ((2 * np.pi / self.WAVELENGTH) 
                 * np.sin(self.two_theta_vertical_range[coordinate_1] 
@@ -288,6 +289,7 @@ class Dectris_Image():
                         * np.pi))
         return qy 
     
+#    @jit    
     def calc_qz(self, coordinate_2):
         qz =    ((2 * np.pi / self.WAVELENGTH) 
                 * (np.sin(self.OMEGA 
