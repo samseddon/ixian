@@ -38,6 +38,20 @@ def main():
     f_1, f_name = file_checker(scan_num, file_index[0],directory + 'processed_files/')
     print('plotting', f_name)
     rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_folder+'images/', directory, scan_num)
+#    axis_1 = 'qy'
+#    axis_2 = 'qz'
+#    axis_3_limits = [1,240]
+#    ##
+#    f_1, f_name = file_checker(scan_num, file_index[0],directory + 'processed_files/')
+#    print('plotting', f_name)
+#    rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_folder+'images/', directory, scan_num)
+#    ##
+#    axis_1 = 'qx'
+#    axis_2 = 'qy'
+#    axis_3_limits = [1,240]
+#    f_1, f_name = file_checker(scan_num, file_index[0],directory + 'processed_files/')
+#    print('plotting', f_name)
+#    rsm_plot(f_1, f_name, axis_1, axis_2, axis_3_limits,output_folder+'images/', directory, scan_num)
     
     
     

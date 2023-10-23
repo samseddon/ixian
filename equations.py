@@ -3,7 +3,18 @@ from colorama import Fore
 import time
 import os
 import inspect
+import pickle
 from numba import jit
+
+
+def pickle_jar(filename, pickled_obj):
+    with open(filename,'wb') as handle:
+        pickle.dump(pickled_obj, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def pickle_unjar(filename):
+    with open(filename, 'rb') as handle:
+        return pickle.load(handle)
 
 
 def progress_bar(progress, total,start_t): #here progress is an integer for a loop say, and total is a length of the loop
@@ -76,7 +87,8 @@ def calc_qz(WL, O, TT_hor):
     return qz
 
 
-def calc_Q_coordinates(dec_image):
+def calc_Q_coordinates(filename):
+    dec_image = pickle_unjar(filename)
     for coordinate_1 in range(np.shape(dec_image.data)[1]):
         row = []
         row_x = []
@@ -97,4 +109,36 @@ def calc_Q_coordinates(dec_image):
         dec_image.Q_y.append(row_y)
         dec_image.Q_z.append(row_z)
         dec_image.Q_coords.append(row)
-    return dec_image
+    pickle_jar(filename, dec_image)
+    return 
+
+def nr_pts_finder(filename):
+    set_x = set()                                                              
+    set_y = set()
+    set_z = set()
+    list_x = []                                                            
+    list_y = []                                                            
+    list_z = []                                                            
+    dec_image = pickle_unjar(filename)                                    
+    temp_array = np.array(dec_image.pixel_list)                            
+                                                                           
+#    for _ in range(len(dec_image.pixel_list)):                             
+#        list_x.append(dec_image.pixel_list[_][0])                         
+#        list_y.append(dec_image.pixel_list[_][1])                         
+#        list_z.append(dec_image.pixel_list[_][2])                         
+#        total_list.append(dec_image.pixel_list[_])                        
+                                                                           
+    list_x = np.round(temp_array[:,0], 3)                                  
+    list_y = np.round(temp_array[:,1], 3)                                  
+    list_z = np.round(temp_array[:,2], 3)                                  
+    for number in np.unique(list_x):                                       
+        set_x.add(number)                                                  
+    for number in np.unique(list_y):                                       
+        set_y.add(number)                                                  
+    for number in np.unique(list_z):                                       
+        set_z.add(number)                                                  
+#   set_x = set.add(list_x)                                                
+#   set_y = set.add(list_y)                                                
+#   set_z = set.add(list_z)                                                
+    del dec_image
+    return [list(set_x), list(set_y), list(set_z)]

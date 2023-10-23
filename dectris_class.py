@@ -1,4 +1,5 @@
 import os
+import matplotlib.pyplot as plt
 import inspect
 import fabio
 import math
@@ -18,7 +19,7 @@ class Q_Space():
         self.directory = directory
         
         self.qlim_dict = self.qlim()
-        
+        print(self.qlim_dict) 
         self.QX_MIN = self.qlim_dict["qx_min"]
         self.QX_MAX = self.qlim_dict["qx_max"]
         self.QY_MIN = self.qlim_dict["qy_min"]
@@ -67,9 +68,9 @@ class Q_Space():
                     else:
                         self.data[s, t, u] = self.data[s, t, u] / self.q_idx[s, t, u]
     def qlim(self):
-        import_var = self.directory \
-                + "user_defined_parameters/qlim/qlim_" \
-                + self.spot_dict[str(self.scan_num[0])] \
+        import_var = "local/"\
+                + "qlim/qlim_" \
+                + str(self.scan_num[0]) \
                 + ".txt"
 
         if os.path.exists(import_var) == False:
@@ -213,6 +214,8 @@ class Dectris_Image():
         self.two_theta_vertical_range = []
         self.generate_two_thetas() # Calculates range of two_theta
         self.slice_and_dice(file) # Chops out the dead rows and selects window
+#        plt.imshow(self.data)
+#        plt.show()
         file.close()
 
 

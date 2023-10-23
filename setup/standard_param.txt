@@ -10,8 +10,12 @@
          'wavelength' : 1.0,
 	 'det_ang' : 0.01122,
          'chi_offset' : 0,   #neccesary for the equations but typically zero
-         'realx_lim_low' : 100, 
-         'realx_lim_hig' : 400, 
-         'realy_lim_low' : 100, 
-         'realy_lim_hig' : 500 
+        'realx_lim_low' : 200, 
+        'realx_lim_hig' : 300, 
+        'realy_lim_low' : 260, 
+        'realy_lim_hig' : 330 
+  #     'realx_lim_low' : 100, 
+  #     'realx_lim_hig' : 400, 
+  #     'realy_lim_low' : 100, 
+  #     'realy_lim_hig' : 500 
          }

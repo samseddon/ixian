@@ -18,8 +18,6 @@ Created on Wed Jan 11 14:49:21 2023
 @author: samseddon
 """
 
-
-
 def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     print("Function" \
         + str(inspect.currentframe()).split(",")[-1][5:-1] \
@@ -75,42 +73,92 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     q_unsorted = []
     limit_dict = []
     all_images = []
-    total_list = []
     start_t = time.time()
     major_list = []
+    pickle_names = []
     for image_number in range(len(master_files)):
         major_list.append([file_reference, image_number, \
                 directory, master_files, param])
     for image_number in range(len(master_files)):
-        all_images.append(Dectris_Image(major_list[image_number]))
-    return                                    
-    print(time.time() - start_t)                                    
+        temp_file_name = "local/temp/" + str(image_number) + "_dec_class" + ".pickle"
+        temp_file = Dectris_Image(major_list[image_number])
+        pickle_jar(temp_file_name, temp_file)
+        pickle_names.append(temp_file_name)
+    print("slicing and images took ",time.time() - start_t)                                    
     tim_check = time.time()
+#    for filename in pickle_names:
+#        calc_Q_coordinates(filename)
     pool = Pool()
-    multiprocessing_result = pool.imap(calc_Q_coordinates, all_images)
-#    for dec_image in all_images:
-#        calc_Q_coordinates(dec_image)
+    multiprocessing_result = pool.imap_unordered(calc_Q_coordinates, pickle_names)
     all_images = list(multiprocessing_result)
     pool.close()
     pool.join()
-    print(  time.time()- tim_check)
-    for image_number in range(len(master_files)):
-        for _ in range(len(all_images[image_number].pixel_list)):                             
-            total_list.append(all_images[image_number].pixel_list[_])
-    x = []
-    y = []
-    z = []
+    print("calculating Q values took ", time.time()- tim_check)
+    tim_check = time.time()
+    possible_NR_PTS = []
+    c = 0
+    #for filename in enumerate(pickle_names):
+    #    dec_image = pickle_unjar(filename[1])
+    #    if filename[0] % 1 == 0:
+    #        print(filename[0])
+    #        for _ in range(0,len(dec_image.pixel_list),1):#, int(len(dec_image.pixel_list)/1000)):
+    #            #print(_)
+    #            total_x.append(dec_image.pixel_list[_][0])
+    #            total_y.append(dec_image.pixel_list[_][1])
+    #            total_z.append(dec_image.pixel_list[_][2])
+    #        possible_NR_PTS.append([len(np.unique(np.round(total_x,3))),
+    #                           len(np.unique(np.round(total_y,3))),
+    #                           len(np.unique(np.round(total_z,3)))])
+    #        
+    #    else:
+    #        pass
+    total_list = []
+    master_sets = []
     
-    for _ in range(len(total_list)):                                                     
-            x.append(total_list[_][0])                                                       
-            y.append(total_list[_][1])                                                       
-            z.append(total_list[_][2])                                                       
+#    for file_name in pickle_names:
+#        master_sets.append(nr_pts_finder(file_name))
 
-    NR_PTS = (min(len(np.unique(np.round(x,3))),
-                  len(np.unique(np.round(y,3))),
-                  len(np.unique(np.round(z,3)))))
+    pool = Pool()
+    multiprocessing_result = pool.imap_unordered(nr_pts_finder, pickle_names)
+    master_sets = list(multiprocessing_result)
+    pool.close()
+    pool.join()
 
 
+
+
+    set_x = set() 
+    set_y = set()
+    set_z = set()
+    for element in master_sets:
+        unique_elements_x = np.unique(element[0])
+        for number in unique_elements_x:
+            set_x.add(number)
+        unique_elements_y = np.unique(element[1])
+        for number in unique_elements_y:
+            set_y.add(number)
+        unique_elements_z = np.unique(element[2])
+        for number in unique_elements_z:
+            set_z.add(number)
+    
+    NR_PTS = min(len(set_x), len(set_y), len(set_z))
+#   for _ in range(len(total_list)):                                                     
+#           x.append(total_list[_][0])                                                       
+#           y.append(total_list[_][1])                                                       
+#           z.append(total_list[_][2])                                                       
+#    print(len(np.unique(np.round(x,3))))
+#    print(len(np.unique(np.round(y,3))))  
+#    print(len(set_x), len(set_y), len(set_z))
+#    print(len(np.unique(np.round(x,3))),
+
+    #              len(np.unique(np.round(y,3))),
+    #              len(np.unique(np.round(z,3))))
+    #NR_PTS = (min(len(np.unique(np.round(x,3))),
+    #              len(np.unique(np.round(y,3))),
+    #              len(np.unique(np.round(z,3)))))
+#    NR_PTS = min(possible_NR_PTS)
+    print(NR_PTS)
+    print("NR_PTS Calculation took ", time.time() - tim_check)
     print('\nFinding q limits from sliced data and optimising Q_space mesh')
     qx_min = []
     qy_min = []
@@ -119,7 +167,9 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     qy_max = []
     qz_max = []
     q_min = []
-    for dec_image in all_images:
+    tim_check = time.time()
+    for filename in pickle_names:
+        dec_image = pickle_unjar(filename)
         qx, qy, qz = dec_image.q_lim()
         qx_min.append(qx[0])
         qy_min.append(qy[0])
@@ -127,25 +177,29 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
         qx_max.append(qx[1])
         qy_max.append(qy[1])
         qz_max.append(qz[1])
-   
+        del dec_image
+    
     # NOTE here the qmax/qlim are found, needs to be put into a function.
     Q_max = [np.amax(qx_max), np.amax(qy_max), np.amax(qz_max)]
     Q_min = [np.amin(qx_min), np.amin(qy_min), np.amin(qz_min)]
+    print(Q_max, Q_min)
 
-    if create_files == True or os.path.exists("local/qlim"\
-                                             + "qlim_"\
-                                             + str(scan_num[0])\
-                                             + ".txt")\
-                                             == False: 
-                        
+    if create_files == True:
+              # or os.path.exists("local/qlim"\
+              #                               + "qlim_"\
+              #                               + str(scan_num[0])\
+              #                               + ".txt")\
+              #                               == False:                 
         Q_limit_dict_maker(directory, spot_dict, scan_num, Q_max, Q_min, NR_PTS)
+    print("found q limits in this time", time.time() - tim_check)
 
     q_space = Q_Space(scan_num, spot_dict, directory)
     new_start_t = time.time()
     print('Populating Q_space with pixels')
-    for _ in range(len(all_images)):
-        q_space.populate_3D(all_images[_])
-        progress_bar(_ + 1,len(master_files),new_start_t)
+    for filename in enumerate(pickle_names):
+        dec_image = pickle_unjar(filename[1])
+        q_space.populate_3D(dec_image)
+        progress_bar(filename[0] + 1,len(master_files),new_start_t)
 
 
     q_space.normalise_3D()

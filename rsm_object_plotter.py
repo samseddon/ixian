@@ -394,3 +394,10 @@ def rsm_plot(f_1,
         plt.close()
 
 
+def pickle_jar(filename, pickle_object):
+    with open(filename,'wb') as handle:
+        pickle.dump(pickle_object, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+def pickle_unjar(filename):
+    with (filename, 'rb') as handle:
+        return pickle.load(handle)
