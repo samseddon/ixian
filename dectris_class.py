@@ -150,7 +150,7 @@ class Dectris_Image():
     def __init__(self, file_reference, image_number, directory, master_files, param):
         self.file_reference = file_reference
         self.image_number = image_number
-        self.file = fabio.open(os.path.join(directory + "data/", 
+        file = fabio.open(os.path.join(directory + "data/", 
                                             master_files[image_number]))
         self.param = param
         self.DEADROW1 = param['DeadRow1']                                               
@@ -162,13 +162,13 @@ class Dectris_Image():
         self.REALY_LIM_LOW = param['realy_lim_low']                                     
         self.REALY_LIM_HIG = param['realy_lim_hig']  
 
-        ub = np.array(self.file.header.get('UB_pos').split(' '))
+        ub = np.array(file.header.get('UB_pos').split(' '))
         self.ub = ub.astype(float)
-        self.count_mne   = self.file.header.get('counter_mne').split(' ')
-        self.count_pos   = self.file.header.get('counter_pos').split(' ')
-        self.motor_mne   = self.file.header.get('motor_mne').split(' ')
-        self.motor_pos   = self.file.header.get('motor_pos').split(' ')
-        self.WAVELENGTH  = float(self.file.header.get('source_wavelength').split(' ')[0])
+        self.count_mne   = file.header.get('counter_mne').split(' ')
+        self.count_pos   = file.header.get('counter_pos').split(' ')
+        self.motor_mne   = file.header.get('motor_mne').split(' ')
+        self.motor_pos   = file.header.get('motor_pos').split(' ')
+        self.WAVELENGTH  = float(file.header.get('source_wavelength').split(' ')[0])
         
         self.dict_count = {}
         self.dict_motor = {}
@@ -210,8 +210,8 @@ class Dectris_Image():
         self.two_theta_horizontal_range = []
         self.two_theta_vertical_range = []
         self.generate_two_thetas() # Calculates range of two_theta
-        self.slice_and_dice() # Chops out the dead rows and selects window
-        self.file.close()
+        self.slice_and_dice(file) # Chops out the dead rows and selects window
+        file.close()
         self.calc_Q_coordinates()
 
 
@@ -251,10 +251,10 @@ class Dectris_Image():
                 self.OMEGA = self.OMEGA + 3.8765
 
 
-    def slice_and_dice(self):
-        data = np.concatenate((self.file.data[:self.DEADROW1 - 1, :],
-                    self.file.data[self.DEADROW2 + 1:self.DEADROW3 - 1, :],
-                    self.file.data[self.DEADROW4 + 1:, :]), axis=0)
+    def slice_and_dice(self,file):
+        data = np.concatenate((file.data[:self.DEADROW1 - 1, :],
+                    file.data[self.DEADROW2 + 1:self.DEADROW3 - 1, :],
+                    file.data[self.DEADROW4 + 1:, :]), axis=0)
         two_theta_range_new = np.concatenate((
                       self.two_theta_horizontal_range[:self.DEADROW1 - 1],
                       self.two_theta_horizontal_range[self.DEADROW2 

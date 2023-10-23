@@ -76,26 +76,33 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     total_list = []
     start_t = time.time()
     for image_number in range(len(master_files)):
-        all_images.append(Dectris_Image(file_reference, 
+        tempory_dec = Dectris_Image(file_reference, 
                                         image_number, 
                                         directory, 
-                                        master_files, 
-                                        param))
-        for _ in range(len(all_images[-1].pixel_list)):                             
-            total_list.append(all_images[-1].pixel_list[_])
+                                        master_files,
+                                        param) 
+        orig_filename = "local/temp/" + str(image_number) + "dec_class"
+        suffix = '.pickle'
+        new_filename = orig_filename + suffix
+        with open(new_filename,'wb') as handle:
+            pickle.dump(tempory_dec, handle, protocol=pickle.HIGHEST_PROTOCOL)
+#        for _ in range(len(tempory_dec.pixel_list)):                             
+#            total_list.append(tempory_dec.pixel_list[_])
+        del tempory_dec
         progress_bar(image_number+1,len(master_files),start_t)
-    x = []
-    y = []
-    z = []
-    
-    for _ in range(len(total_list)):                                                     
-            x.append(total_list[_][0])                                                       
-            y.append(total_list[_][1])                                                       
-            z.append(total_list[_][2])                                                       
-
-    NR_PTS = (min(len(np.unique(np.round(x,3))),
-                  len(np.unique(np.round(y,3))),
-                  len(np.unique(np.round(z,3)))))
+#    x = []
+#    y = []
+#    z = []
+#    
+#    for _ in range(len(total_list)):                                                     
+#            x.append(total_list[_][0])                                                       
+#            y.append(total_list[_][1])                                                       
+#            z.append(total_list[_][2])                                                       
+#
+#    NR_PTS = (min(len(np.unique(np.round(x,3))),
+#                  len(np.unique(np.round(y,3))),
+#                  len(np.unique(np.round(z,3)))))
+    NR_PTS = 32
 
 
     print('\nFinding q limits from sliced data and optimising Q_space mesh')
@@ -130,8 +137,13 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     q_space = Q_Space(scan_num, spot_dict, directory)
     new_start_t = time.time()
     print('Populating Q_space with pixels')
-    for _ in range(len(all_images)):
-        q_space.populate_3D(all_images[_])
+    for image_number in range(len(master_files)):
+        
+        filename = "local/temp/" + str(image_number) + "dec_class"
+        with open(filename, 'rb') as handle:         
+             reloaded_dec = pickle.load(handle)
+        q_space.populate_3D(reloaded_dec)
+        del reloaded_dec
         progress_bar(_ + 1,len(master_files),new_start_t)
 
 
