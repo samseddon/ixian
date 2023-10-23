@@ -74,3 +74,27 @@ def calc_qz(WL, O, TT_hor):
                     / 180
                     * np.pi)))
     return qz
+
+
+def calc_Q_coordinates(dec_image):
+    for coordinate_1 in range(np.shape(dec_image.data)[1]):
+        row = []
+        row_x = []
+        row_y = []
+        row_z = []
+
+        for coordinate_2 in range(np.shape(dec_image.data)[0]):
+            dec_image.pixel_list.append([calc_qx(dec_image.WAVELENGTH, dec_image.OMEGA, dec_image.two_theta_horizontal_range[coordinate_2], dec_image.two_theta_vertical_range[coordinate_1]),
+                             calc_qy(dec_image.WAVELENGTH, dec_image.OMEGA, dec_image.two_theta_horizontal_range[coordinate_2], dec_image.two_theta_vertical_range[coordinate_1]),
+                             calc_qz(dec_image.WAVELENGTH, dec_image.OMEGA, dec_image.two_theta_horizontal_range[coordinate_2]),
+                             dec_image.data[coordinate_2, coordinate_1]])
+
+            row_x.append(dec_image.pixel_list[-1][0])
+            row_y.append(dec_image.pixel_list[-1][1])
+            row_z.append(dec_image.pixel_list[-1][2])
+            row.append([row_x[-1], row_y[-1], row_z[-1]])
+        dec_image.Q_x.append(row_x)
+        dec_image.Q_y.append(row_y)
+        dec_image.Q_z.append(row_z)
+        dec_image.Q_coords.append(row)
+    return dec_image

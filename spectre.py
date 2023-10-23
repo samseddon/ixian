@@ -52,11 +52,9 @@ class Scan():
     def set_iroi2(self, iroi2):
         self.iroi2.append(float(iroi2))
 
-if __name__ == "__main__":
-    spec_file="/home/sseddon/Desktop/500GB/Data/XMaS/pyrrhotite/"\
-              + "spec/Fe7S8_010_strain01.spec"
-    
-    file1 = open(spec_file, 'r')
+def generate_spectre_list(spec_file_location):
+
+    file1 = open(spec_file_location, 'r')
     Lines = file1.readlines()
     scans = []
     first_scan = True
@@ -91,6 +89,47 @@ if __name__ == "__main__":
                             scan.set_iroi(line_array[i])
                         if nme == 'iroi2':
                             scan.set_iroi2(line_array[i])
+    return scans
+
+if __name__ == "__main__":
+    spec_file_location="/home/sseddon/Desktop/500GB/Data/XMaS/pyrrhotite/"\
+              + "spec/Fe7S8_010_strain01.spec"
+    scans = generate_spectre_list(spec_file_location)
+#    file1 = open(spec_file, 'r')
+#    Lines = file1.readlines()
+#    scans = []
+#    first_scan = True
+#    
+#    for line in Lines:
+#        if not line.strip():
+#            if first_scan == True:
+#                scan = Scan()
+#                first_scan = False
+#                pass
+#            else:
+#                scans.append(scan)
+#                scan = Scan()
+#                pass
+#        else:    
+#            line_array = line.strip().split(' ')
+#            line_id = line_array[0]
+#                
+#            if line_id == '#S':
+#                scan.set_scan_type(line_array[3])
+#                scan.set_scan_num(line_array[1])
+#                scan.set_motor(line_array[5])
+#            if line_id == '#L':
+#                scan.set_motor_nme(line[2:].strip().split('  '))
+#            if line_id[0] != "#":
+#                scan.set_motor_value(line_array[0])
+#                for i in range(1, len(scan.motor_nme)):
+#                        nme = scan.motor_nme[i]
+#                        if nme == 'cdet':
+#                            scan.set_cdet(line_array[i])
+#                        if nme == 'iroi':
+#                            scan.set_iroi(line_array[i])
+#                        if nme == 'iroi2':
+#                            scan.set_iroi2(line_array[i])
 
     
     scan_num = 137

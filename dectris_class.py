@@ -147,28 +147,30 @@ class Q_Space():
 
 
 class Dectris_Image():
-    def __init__(self, file_reference, image_number, directory, master_files, param):
-        self.file_reference = file_reference
-        self.image_number = image_number
-        self.file = fabio.open(os.path.join(directory + "data/", 
-                                            master_files[image_number]))
-        self.param = param
-        self.DEADROW1 = param['DeadRow1']                                               
-        self.DEADROW2 = param['DeadRow2']                                               
-        self.DEADROW3 = param['DeadRow3']                                               
-        self.DEADROW4 = param['DeadRow4']   
-        self.REALX_LIM_LOW = param['realx_lim_low']                                     
-        self.REALX_LIM_HIG = param['realx_lim_hig']                                     
-        self.REALY_LIM_LOW = param['realy_lim_low']                                     
-        self.REALY_LIM_HIG = param['realy_lim_hig']  
+    def __init__(self, major_list):
+        self.file_reference = major_list[0]
+        self.image_number = major_list[1]
+        self.directory = major_list[2]
+        self.master_files = major_list[3]
+        file = fabio.open(os.path.join(self.directory + "data/", 
+                                            self.master_files[self.image_number]))
+        self.param = major_list[-1]
+        self.DEADROW1 =      self.param['DeadRow1']                                               
+        self.DEADROW2 =      self.param['DeadRow2']                                               
+        self.DEADROW3 =      self.param['DeadRow3']                                               
+        self.DEADROW4 =      self.param['DeadRow4']   
+        self.REALX_LIM_LOW = self.param['realx_lim_low']                                     
+        self.REALX_LIM_HIG = self.param['realx_lim_hig']                                     
+        self.REALY_LIM_LOW = self.param['realy_lim_low']                                     
+        self.REALY_LIM_HIG = self.param['realy_lim_hig']  
 
-        ub = np.array(self.file.header.get('UB_pos').split(' '))
+        ub = np.array(file.header.get('UB_pos').split(' '))
         self.ub = ub.astype(float)
-        self.count_mne   = self.file.header.get('counter_mne').split(' ')
-        self.count_pos   = self.file.header.get('counter_pos').split(' ')
-        self.motor_mne   = self.file.header.get('motor_mne').split(' ')
-        self.motor_pos   = self.file.header.get('motor_pos').split(' ')
-        self.WAVELENGTH  = float(self.file.header.get('source_wavelength').split(' ')[0])
+        self.count_mne   = file.header.get('counter_mne').split(' ')
+        self.count_pos   = file.header.get('counter_pos').split(' ')
+        self.motor_mne   = file.header.get('motor_mne').split(' ')
+        self.motor_pos   = file.header.get('motor_pos').split(' ')
+        self.WAVELENGTH  = float(file.header.get('source_wavelength').split(' ')[0])
         
         self.dict_count = {}
         self.dict_motor = {}
@@ -210,9 +212,8 @@ class Dectris_Image():
         self.two_theta_horizontal_range = []
         self.two_theta_vertical_range = []
         self.generate_two_thetas() # Calculates range of two_theta
-        self.slice_and_dice() # Chops out the dead rows and selects window
-        self.file.close()
-        self.calc_Q_coordinates()
+        self.slice_and_dice(file) # Chops out the dead rows and selects window
+        file.close()
 
 
     def q_lim(self):
@@ -221,27 +222,27 @@ class Dectris_Image():
                (np.amin(self.Q_z), np.amax(self.Q_z))
 
 
-    def calc_Q_coordinates(self):
-        for coordinate_1 in range(np.shape(self.data)[1]):
-            row = []
-            row_x = []
-            row_y = []
-            row_z = []
-
-            for coordinate_2 in range(np.shape(self.data)[0]):
-                self.pixel_list.append([calc_qx(self.WAVELENGTH, self.OMEGA, self.two_theta_horizontal_range[coordinate_2], self.two_theta_vertical_range[coordinate_1]),
-                                 calc_qy(self.WAVELENGTH, self.OMEGA, self.two_theta_horizontal_range[coordinate_2], self.two_theta_vertical_range[coordinate_1]),
-                                 calc_qz(self.WAVELENGTH, self.OMEGA, self.two_theta_horizontal_range[coordinate_2]),
-                                 self.data[coordinate_2, coordinate_1]])
-
-                row_x.append(self.pixel_list[-1][0])
-                row_y.append(self.pixel_list[-1][1])
-                row_z.append(self.pixel_list[-1][2])
-                row.append([row_x[-1], row_y[-1], row_z[-1]])
-            self.Q_x.append(row_x)
-            self.Q_y.append(row_y)
-            self.Q_z.append(row_z)
-            self.Q_coords.append(row)
+#    def calc_Q_coordinates(self):
+#        for coordinate_1 in range(np.shape(self.data)[1]):
+#            row = []
+#            row_x = []
+#            row_y = []
+#            row_z = []
+#
+#            for coordinate_2 in range(np.shape(self.data)[0]):
+#                self.pixel_list.append([calc_qx(self.WAVELENGTH, self.OMEGA, self.two_theta_horizontal_range[coordinate_2], self.two_theta_vertical_range[coordinate_1]),
+#                                 calc_qy(self.WAVELENGTH, self.OMEGA, self.two_theta_horizontal_range[coordinate_2], self.two_theta_vertical_range[coordinate_1]),
+#                                 calc_qz(self.WAVELENGTH, self.OMEGA, self.two_theta_horizontal_range[coordinate_2]),
+#                                 self.data[coordinate_2, coordinate_1]])
+#
+#                row_x.append(self.pixel_list[-1][0])
+#                row_y.append(self.pixel_list[-1][1])
+#                row_z.append(self.pixel_list[-1][2])
+#                row.append([row_x[-1], row_y[-1], row_z[-1]])
+#            self.Q_x.append(row_x)
+#            self.Q_y.append(row_y)
+#            self.Q_z.append(row_z)
+#            self.Q_coords.append(row)
 
     def omega_offsetter(self):
         if self.file_reference == "MAG001":
@@ -251,10 +252,10 @@ class Dectris_Image():
                 self.OMEGA = self.OMEGA + 3.8765
 
 
-    def slice_and_dice(self):
-        data = np.concatenate((self.file.data[:self.DEADROW1 - 1, :],
-                    self.file.data[self.DEADROW2 + 1:self.DEADROW3 - 1, :],
-                    self.file.data[self.DEADROW4 + 1:, :]), axis=0)
+    def slice_and_dice(self, file):
+        data = np.concatenate((file.data[:self.DEADROW1 - 1, :],
+                    file.data[self.DEADROW2 + 1:self.DEADROW3 - 1, :],
+                    file.data[self.DEADROW4 + 1:, :]), axis=0)
         two_theta_range_new = np.concatenate((
                       self.two_theta_horizontal_range[:self.DEADROW1 - 1],
                       self.two_theta_horizontal_range[self.DEADROW2 

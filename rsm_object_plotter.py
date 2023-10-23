@@ -386,7 +386,8 @@ def rsm_plot(f_1,
     ax.set_title(spot)
     output_file_name = file_name[:-7] + q_1 + '_v_' + q_2
     output_file_type = '.png'
-    plt.savefig(existential_check(output_file_name, output_file_type, output_folder), bbox_inches='tight')
+
+#plt.savefig(existential_check(output_file_name, output_file_type, output_folder), bbox_inches='tight')
     if show_plot == True:
         plt.show()
     else:

@@ -1,4 +1,5 @@
 import os
+import sys
 import inspect
 import fabio
 import time
@@ -10,6 +11,7 @@ import seaborn as sns
 import matplotlib.patches as patches
 from dectris_class import *
 from colour_bar import code_TUD_cbar as cbar
+from multiprocessing import Pool
 """
 Created on Wed Jan 11 14:49:21 2023
 
@@ -75,15 +77,26 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     all_images = []
     total_list = []
     start_t = time.time()
+    major_list = []
     for image_number in range(len(master_files)):
-        all_images.append(Dectris_Image(file_reference, 
-                                        image_number, 
-                                        directory, 
-                                        master_files, 
-                                        param))
-        for _ in range(len(all_images[-1].pixel_list)):                             
-            total_list.append(all_images[-1].pixel_list[_])
-        progress_bar(image_number+1,len(master_files),start_t)
+        major_list.append([file_reference, image_number, \
+                directory, master_files, param])
+    for image_number in range(len(master_files)):
+        all_images.append(Dectris_Image(major_list[image_number]))
+    return                                    
+    print(time.time() - start_t)                                    
+    tim_check = time.time()
+    pool = Pool()
+    multiprocessing_result = pool.imap(calc_Q_coordinates, all_images)
+#    for dec_image in all_images:
+#        calc_Q_coordinates(dec_image)
+    all_images = list(multiprocessing_result)
+    pool.close()
+    pool.join()
+    print(  time.time()- tim_check)
+    for image_number in range(len(master_files)):
+        for _ in range(len(all_images[image_number].pixel_list)):                             
+            total_list.append(all_images[image_number].pixel_list[_])
     x = []
     y = []
     z = []
@@ -142,7 +155,7 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     suffix = '.pickle'
     new_filename = existential_check(orig_filename,
                                      suffix, 
-                                     directory + 'processed_files_july23/')
+                                     directory + 'processed_files/')
     with open(new_filename,'wb') as handle:
         pickle.dump(q_space, handle, protocol=pickle.HIGHEST_PROTOCOL)
 #    
@@ -150,6 +163,8 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
                                                     - start_t))
                                                     + ' seconds')
 #
+
+
 def Q_limit_dict_maker(directory, spot_dict, scan_num, Q_max, Q_min, NR_PTS):  
     qlim_dict = {'qz_min' : Q_min[2],                                          
                   'qz_max' : Q_max[2],                                         
