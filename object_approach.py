@@ -91,34 +91,11 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     pool = Pool()
     multiprocessing_result = pool.imap_unordered(calc_Q_coordinates, pickle_names)
     all_images = list(multiprocessing_result)
-    pool.close()
-    pool.join()
     print("calculating Q values took ", time.time()- tim_check)
     tim_check = time.time()
     possible_NR_PTS = []
     c = 0
-    #for filename in enumerate(pickle_names):
-    #    dec_image = pickle_unjar(filename[1])
-    #    if filename[0] % 1 == 0:
-    #        print(filename[0])
-    #        for _ in range(0,len(dec_image.pixel_list),1):#, int(len(dec_image.pixel_list)/1000)):
-    #            #print(_)
-    #            total_x.append(dec_image.pixel_list[_][0])
-    #            total_y.append(dec_image.pixel_list[_][1])
-    #            total_z.append(dec_image.pixel_list[_][2])
-    #        possible_NR_PTS.append([len(np.unique(np.round(total_x,3))),
-    #                           len(np.unique(np.round(total_y,3))),
-    #                           len(np.unique(np.round(total_z,3)))])
-    #        
-    #    else:
-    #        pass
-    total_list = []
-    master_sets = []
-    
-#    for file_name in pickle_names:
-#        master_sets.append(nr_pts_finder(file_name))
 
-    pool = Pool()
     multiprocessing_result = pool.imap_unordered(nr_pts_finder, pickle_names)
     master_sets = list(multiprocessing_result)
     pool.close()
@@ -132,13 +109,13 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     set_z = set()
     for element in master_sets:
         unique_elements_x = np.unique(element[0])
-        for number in unique_elements_x:
+        for number in element[0]:
             set_x.add(number)
         unique_elements_y = np.unique(element[1])
-        for number in unique_elements_y:
+        for number in element[1]:
             set_y.add(number)
         unique_elements_z = np.unique(element[2])
-        for number in unique_elements_z:
+        for number in element[2]:
             set_z.add(number)
     
     NR_PTS = min(len(set_x), len(set_y), len(set_z))
