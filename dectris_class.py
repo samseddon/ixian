@@ -13,9 +13,8 @@ Created on Wed Jan 11 14:51:58 2023
 """
 
 class Q_Space():
-    def __init__(self, scan_num, spot_dict, directory, symmetric):
+    def __init__(self, scan_num, directory, symmetric):
         self.scan_num = scan_num
-        self.spot_dict = spot_dict
         self.directory = directory
         
         self.qlim_dict = self.qlim()

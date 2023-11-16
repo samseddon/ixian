@@ -40,26 +40,25 @@ def omega_scan(directory,output_folder,file_reference,scan_num,create_files):
                     in scan_num]
     
     
-    with open(directory+'user_defined_parameters/spot_dict.txt','r') as inf:
-        spot_dict = eval(inf.read())
+#    with open(directory+'user_defined_parameters/spot_dict.txt','r') as inf:
+#        spot_dict = eval(inf.read())
     
     print('\nCreating parameter files')
     
     filename = directory\
                + 'user_defined_parameters/qlim/qlim_'\
-               + spot_dict[str(scan_num[0])]\
+               + str(scan_num[0])\
                + '.txt'
     
-    parameter_setup(directory,
+    param = parameter_setup(directory,
                     master_files, 
                     file_reference,
-                    spot_dict,
                     scan_num)
+    # NOTE proceed from here removing
 
-
-    param = param_read(spot_dict,
-                       scan_num[0],
-                       directory)
+    #param = param_read(spot_dict,
+    #                   scan_num[0],
+    #                   directory)
         
     print('\nSlicing images and calulating pixel Q values..')
     start_t = time.time()
@@ -137,7 +136,6 @@ def omega_scan(directory,output_folder,file_reference,scan_num,create_files):
     Q_min = [np.amin(qx_min), np.amin(qy_min), np.amin(qz_min)]
 
     Q_limit_dict_maker(directory, 
-                       spot_dict, 
                        scan_num, 
                        Q_max, 
                        Q_min, 
@@ -147,7 +145,7 @@ def omega_scan(directory,output_folder,file_reference,scan_num,create_files):
     
     print("found q limits in this time", time.time() - tim_check)
 
-    q_space = Q_Space(scan_num, spot_dict, directory, symmetric = True)
+    q_space = Q_Space(scan_num, directory, symmetric = True)
     new_start_t = time.time()
     print('Populating Q_space with pixels')
     for filename in enumerate(pickle_names):
@@ -174,7 +172,6 @@ def omega_scan(directory,output_folder,file_reference,scan_num,create_files):
 
 
 def Q_limit_dict_maker(directory,
-                       spot_dict,
                        scan_num,
                        Q_max,
                        Q_min,
@@ -206,37 +203,36 @@ def Q_limit_dict_maker(directory,
         inf.write(str(qlim_dict))                                              
     print('Created file',filename)   
 
-def param_read(spot_dict,scan_num,directory):
-    print("Function" \
-        + str(inspect.currentframe()).split(",")[-1][5:-1] \
-        + " called from"\
-        + str(inspect.currentframe()).split(",")[1])
-    """ Takes the spot string defined in the spot dictionary and opens the 
-    corresponding parameter file, returning it.
-           Parameters: 
-               spot_dict(dict)        : dictionary of scans and spots
-               scan_num(array)        : array of scan numbers being read
-               directory(string)      : string pointing to data directory 
-                                        structure
-           Returns:
-               newly_read_param_file  : as it says on the tin
-    """
-    import_var = directory\
-                 + "user_defined_parameters/param/param_" \
-                 + spot_dict[str(scan_num)]\
-                 + '.txt'
-    if os.path.exists(import_var)==False:
-        raise(ValueError("Param_dict for spot non-existant"))
-    
-    with open(import_var,'r') as inf:
-        newly_read_param_dict = eval(inf.read())
-    return newly_read_param_dict
+#def param_read(spot_dict,scan_num,directory):
+#    print("Function" \
+#        + str(inspect.currentframe()).split(",")[-1][5:-1] \
+#        + " called from"\
+#        + str(inspect.currentframe()).split(",")[1])
+#    """ Takes the spot string defined in the spot dictionary and opens the 
+#    corresponding parameter file, returning it.
+#           Parameters: 
+#               spot_dict(dict)        : dictionary of scans and spots
+#               scan_num(array)        : array of scan numbers being read
+#               directory(string)      : string pointing to data directory 
+#                                        structure
+#           Returns:
+#               newly_read_param_file  : as it says on the tin
+#    """
+#    import_var = directory\
+#                 + "user_defined_parameters/param/param_" \
+#                 + spot_dict[str(scan_num)]\
+#                 + '.txt'
+#    if os.path.exists(import_var)==False:
+#        raise(ValueError("Param_dict for spot non-existant"))
+#    
+#    with open(import_var,'r') as inf:
+#        newly_read_param_dict = eval(inf.read())
+#    return newly_read_param_dict
 
 
 def parameter_setup(directory,
                     master_files,
                     file_reference,
-                    spot_dict,
                     scan_num):
     print("Function" \
         + str(inspect.currentframe()).split(",")[-1][5:-1] \
@@ -257,7 +253,7 @@ def parameter_setup(directory,
     """
     filename = directory \
                + '/user_defined_parameters/param/param_' \
-               + spot_dict[str(scan_num[0])] \
+               + str(scan_num[0]) \
                + '.txt' 
     
     with open('setup/standard_param.txt', 'r') as inf:
@@ -283,12 +279,12 @@ def parameter_setup(directory,
     f3 = f.data    
     f.close()
     
-
-    with open(filename,'w') as inf:
-        inf.write(str(gen_param))
-    print('Created file',
-          filename,
-          '\n Change slice region in parameter file')
+    return gen_param
+    #with open(filename,'w') as inf:
+    #    inf.write(str(gen_param))
+    #print('Created file',
+    #      filename,
+    #      '\n Change slice region in parameter file')
 
 
 

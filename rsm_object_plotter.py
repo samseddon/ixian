@@ -315,10 +315,7 @@ def rsm_plot(f_1,
         values_2 = f_1.q_y
     if q_2 == 'qz':
         values_2 = f_1.q_z
-    with open(directory+'user_defined_parameters/spot_dict.txt','r') as inf:
-        spot_dict = eval(inf.read())
 
-    spot = spot_dict[str(scan_num[0])]
     volume = np.array(f_1.data)
 #    for i in range(volume.shape[0]):
 #        for j in range(volume.shape[1]):
