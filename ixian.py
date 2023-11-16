@@ -38,9 +38,10 @@ def main():
     if os.path.exists(directory + "processed_files/") ==  False:
         os.mkdir(directory + "processed_files/")
     if os.path.exists("local/temp/") ==  False:
-        os.mkdir("local/temp/")  
+        os.mkdir("local/")
+        os.mkdir("local/temp")  
     if os.path.exists("local/qlim/") ==  False:
-        os.mkdir("local/qlim/")  
+        os.mkdir("local/qlim")  
     omega_scan(directory, file_reference, scan_num, create_files = True)
     
 
