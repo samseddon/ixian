@@ -7,7 +7,6 @@ from equations import *
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 import matplotlib.patches as patches
 from dectris_class import *
 from colour_bar import code_TUD_cbar as cbar
@@ -18,7 +17,7 @@ Created on Wed Jan 11 14:49:21 2023
 @author: samseddon
 """
 
-def omega_scan(directory,output_folder,file_reference,scan_num,create_files):
+def omega_scan(directory, file_reference, scan_num, create_files):
     """ The main function to call, this finds the relevant data files, writes
     (if create_files = True) and reads the q_limits, initiles an array in 
     q-space, populates it with pixels and normalises the result. 
@@ -31,7 +30,7 @@ def omega_scan(directory,output_folder,file_reference,scan_num,create_files):
                create_files(bool)     : should be True for first use, allows
                                         functions for given 
     """
-    files_location = os.listdir(directory+'data/')
+    files_location = os.listdir(directory)
     master_files = [m for m in files_location \
                     if m.startswith(file_reference) \
                     and m.endswith(".edf")]
@@ -162,6 +161,7 @@ def omega_scan(directory,output_folder,file_reference,scan_num,create_files):
     new_filename = existential_check(orig_filename,
                                      suffix, 
                                      directory + 'processed_files/')
+    #NOTE make processed files folder here
     with open(new_filename,'wb') as handle:
         pickle.dump(q_space, handle, protocol=pickle.HIGHEST_PROTOCOL)
 #    
@@ -263,22 +263,22 @@ def parameter_setup(directory,
     REALX_LIM_HIG = gen_param['realx_lim_hig']
     REALY_LIM_LOW = gen_param['realy_lim_low']
     REALY_LIM_HIG = gen_param['realy_lim_hig']
-
-    k = int(len(master_files)/4)
-    f = fabio.open(os.path.join(directory+'data/', master_files[k]))
-    f1 = f.data
-    f.close()
-    
-    k = int(len(master_files)/2)
-    f = fabio.open(os.path.join(directory+'data/', master_files[k]))
-    f2 = f.data    
-    f.close()
-    
-    k = int(3*len(master_files)/4)
-    f = fabio.open(os.path.join(directory+'data/', master_files[k]))
-    f3 = f.data    
-    f.close()
-    
+#
+#    k = int(len(master_files)/4)
+#    f = fabio.open(os.path.join(directory+'data/', master_files[k]))
+#    f1 = f.data
+#    f.close()
+#    
+#    k = int(len(master_files)/2)
+#    f = fabio.open(os.path.join(directory+'data/', master_files[k]))
+#    f2 = f.data    
+#    f.close()
+#    
+#    k = int(3*len(master_files)/4)
+#    f = fabio.open(os.path.join(directory+'data/', master_files[k]))
+#    f3 = f.data    
+#    f.close()
+#    
     return gen_param
     #with open(filename,'w') as inf:
     #    inf.write(str(gen_param))

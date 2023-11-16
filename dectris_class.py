@@ -196,7 +196,7 @@ class Dectris_Image():
         self.image_number = major_list[1]
         self.directory = major_list[2]
         self.master_files = major_list[3]
-        file = fabio.open(os.path.join(self.directory + "data/", 
+        file = fabio.open(os.path.join(self.directory, 
                                             self.master_files[self.image_number]))
         self.param = major_list[-1]
         self.DEADROW1 =      self.param['DeadRow1']                                               

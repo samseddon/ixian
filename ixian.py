@@ -19,19 +19,27 @@ import matplotlib.pyplot as plt
 ## NOTE K test run data ends here
 
 def main():
-    # NOTE test data entered here 
-    file_reference = "aV2O3R1"
-    directory = "/home/sseddon/Documents/Local-data/test_data/"
-    output_folder = directory + "processed_files/"
-    scan_num = [418,419]
-    # NOTE K test run data ends here
+#    # NOTE test data entered here 
+#    file_reference = "aV2O3R1"
+#    directory = "/home/sseddon/Documents/Local-data/test_data/"
+#    output_folder = directory + "processed_files/"
+#    scan_num = [418,419]
+#    # NOTE K test run data ends here
+#
+#    directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/"    
 
-    directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/"    
-    output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files_july23/"
+
+#output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files_july23/"
+    directory="/home/sseddon/Downloads/ixian_testdata/"
     file_reference = "MAG001"
    # #scan_nums = [[153],[154]]
     scan_num = [194]
-    omega_scan(directory, output_folder, file_reference, scan_num, create_files = True)
+
+    if os.path.exists(directory + "processed_files/") ==  False:
+        os.mkdir(directory + "processed_files/")
+    if os.path.exists("local/temp/") ==  False:
+        os.mkdir("local/temp/")  
+    omega_scan(directory, file_reference, scan_num, create_files = True)
     
 
 #    fig, (ax_xz, ax_yz, ax_xy) = plt.subplots(nrows = 1, ncols = 3, aspect = "equal", figsize = (12,5))
@@ -52,9 +60,9 @@ def main():
     print('plotting', f_name)
     vmin = 1
     vmax = 6
-    fig, ax_xz = rsm_plot(f_1, f_name, "qx", "qz", axis_3_limits, output_folder+'images/', directory, scan_num, fig, ax_xz)
-    fig, ax_yz = rsm_plot(f_1, f_name, "qy", "qz", axis_3_limits, output_folder+'images/', directory, scan_num, fig, ax_yz)
-    fig, ax_xy = rsm_plot(f_1, f_name, "qx", "qy", axis_3_limits, output_folder+'images/', directory, scan_num, fig, ax_xy)
+    fig, ax_xz = rsm_plot(f_1, f_name, "qx", "qz", axis_3_limits, directory + "processed_files/"+'images/', directory, scan_num, fig, ax_xz)
+    fig, ax_yz = rsm_plot(f_1, f_name, "qy", "qz", axis_3_limits, directory + "processed_files/"+'images/', directory, scan_num, fig, ax_yz)
+    fig, ax_xy = rsm_plot(f_1, f_name, "qx", "qy", axis_3_limits, directory + "processed_files/"+'images/', directory, scan_num, fig, ax_xy)
 #    ax_xz.axes.set_aspect('equal', adjustable='box')
 #    ax_yz.axes.set_aspect("equal", adjustable = "box")
 #    ax_xy.axes.set_aspect("equal", adjustable = "box")

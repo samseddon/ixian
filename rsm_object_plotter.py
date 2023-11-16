@@ -5,14 +5,13 @@ import os
 import glob
 import time
 import numpy as np
-from nexusformat import nexus
 from matplotlib.cm import ScalarMappable
 import matplotlib.pyplot as plt
 from scipy import interpolate
 from equations import existential_check
 from colour_bar import code_TUD_cbar as cbar
 from mpl_toolkits import mplot3d
-plt.style.use("seddon_TUD") 
+#plt.style.use("seddon_TUD") 
 
 def file_checker(s_num, s_ind, input_path):
     """
