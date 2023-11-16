@@ -4,6 +4,7 @@ import time
 import os
 import inspect
 import pickle
+import math
 from numba import jit
 
 
@@ -142,3 +143,29 @@ def nr_pts_finder(filename):
 #   set_z = set.add(list_z)                                                
     del dec_image
     return [list(set_x), list(set_y), list(set_z)]
+
+@jit(cache = True)
+def find_q_linear_fast(
+    qx,
+    qy,
+    qz,
+    QX_MAX, 
+    QY_MAX, 
+    QZ_MAX, 
+    QX_MIN, 
+    QY_MIN, 
+    QZ_MIN, 
+    QX_GRAD,
+    QY_GRAD,
+    QZ_GRAD):
+    if qx < QX_MIN \
+            or qx >= QX_MAX \
+            or qy <  QY_MIN \
+            or qy >= QY_MAX \
+            or qz <  QZ_MIN \
+            or qz >= QZ_MAX:
+        return (False,[0,0,0])
+    else:
+        return(True, [math.floor((qx-QX_MIN)/QX_GRAD)+1,
+                      math.floor((qy-QY_MIN)/QY_GRAD)+1,
+                      math.floor((qz-QZ_MIN)/QZ_GRAD)+1])

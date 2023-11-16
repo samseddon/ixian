@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from scipy import interpolate
 from equations import existential_check
 from colour_bar import code_TUD_cbar as cbar
+from mpl_toolkits import mplot3d
 plt.style.use("seddon_TUD") 
 
 def file_checker(s_num, s_ind, input_path):
@@ -263,6 +264,23 @@ def plane_check(Q_vec, Q_init, Q_test):
     return (Q_vec[0] * Q_test[0] + Q_vec[1]* Q_test[1] + Q_vec[2] * Q_test[2] - (Q_vec[0] * Q_init[0] + Q_vec[1] * Q_init[1]+ Q_vec[2] * Q_init[2]))/(Q_vec[0] + Q_vec[1] + Q_vec[2])
 
 
+def threeD_rsm_plot(f_1):
+    volume = f_1.data
+    print(volume)
+    q_x = f_1.q_x
+    q_y = f_1.q_y
+    q_z = f_1.q_z
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.scatter(q_x, q_y, q_z, volume)#, cmap=cbar)
+    plt.show()
+
+
+
+
+
+
+
 def rsm_plot(f_1, 
              file_name, 
              q_1, 
@@ -271,7 +289,10 @@ def rsm_plot(f_1,
              output_folder, 
              directory, 
              scan_num, 
+             fig,
+             ax,
              show_plot = True):
+             
     
     """
     """
@@ -304,18 +325,22 @@ def rsm_plot(f_1,
 #            for k in range(volume.shape[2]):
 #                if volume[i,j,k] >0:
 #                    print('good')
-    q1_q2_matrix = np.zeros((volume.shape[0], volume.shape[2])) # THIS IS ALWAYS 0 and 2
-    if q_3_assigned == 0:
+    if q_3_assigned == 0: # int x
+        q1_q2_matrix = np.zeros((volume.shape[1], volume.shape[2])) # THIS IS ALWAYS 0 and 2
         for i in range(volume.shape[2]):  # this axis 0 for x
             q1_q2_matrix[:, i] = np.copy(volume[q_3_lim[0]:q_3_lim[1],:, i].mean(axis=0) + 10 ** (-8))
-            #print(q1_q2_matrix)
+
+
+    
     elif q_3_assigned == 1: # int y
+        q1_q2_matrix = np.zeros((volume.shape[0], volume.shape[2])) # THIS IS ALWAYS 0 and 2
         for i in range(volume.shape[2]):  # this axis 0 for y
             q1_q2_matrix[:, i] = np.copy(volume[:, q_3_lim[0]:q_3_lim[1], i].mean(axis=1) + 10 ** (-8))
             #print(q1_q2_matrix)
+    
     elif q_3_assigned == 2: #int z
-
-        for i in range(volume.shape[2]):  # this axis 0 for z
+        q1_q2_matrix = np.zeros((volume.shape[0], volume.shape[1])) # THIS IS ALWAYS 0 and 2
+        for i in range(volume.shape[1]):  # this axis 0 for z
             #print(q1_q2_matrix)
             q1_q2_matrix[:, i] = np.copy(volume[:, i, q_3_lim[0]:q_3_lim[1]].mean(axis=1) + 10 ** (-8))
 
@@ -341,7 +366,12 @@ def rsm_plot(f_1,
     for i in range(len(fin)):
         if fin[i] < 0:
             fin[i] = 0.000000001
-    q1_q2_matrix = np.reshape(fin, (volume.shape[0], volume.shape[2]))
+    if q_3_assigned == 0:
+        q1_q2_matrix = np.reshape(fin, (volume.shape[1], volume.shape[2]))
+    elif q_3_assigned == 1:
+        q1_q2_matrix = np.reshape(fin, (volume.shape[0], volume.shape[2]))
+    elif q_3_assigned == 1:
+        q1_q2_matrix = np.reshape(fin, (volume.shape[0], volume.shape[1]))
 
     mesh_q_1_min = np.min(fq_2)  # sets the minimum qx value for new mesh (np.min(fq_2) is the minimum of the input data)
     mesh_q_1_max = np.max(fq_2)  # sets the maximum qx value for new mesh (np.max(fq_2) is the maximum of the input data)
@@ -360,7 +390,7 @@ def rsm_plot(f_1,
     n_qz = np.linspace(mesh_q_2_min, mesh_q_2_max, nr_fqz)
 
     #  FIGURE
-    fig, ax = plt.subplots(figsize = (5,4), dpi = 128)
+    #fig, ax = plt.figure(figsize = (5,4), dpi = 128)
     #cb = img = ax.imshow(np.log10(grid_q), origin='lower', aspect=1,
     #                     extent=[mesh_q_2_min, mesh_q_2_max, mesh_q_1_min,
     #                         mesh_q_1_max], vmin=0, vmax=6,cmap='inferno')
@@ -374,20 +404,23 @@ def rsm_plot(f_1,
     ax.contour(np.log10(grid_q), origin='lower',         
                     extent=[mesh_q_2_min, mesh_q_2_max, mesh_q_1_min,mesh_q_1_max],
             levels = 64, colors = "#00305d", linewidths = 0.1, vmin = vmin)
-    cobar = fig.colorbar(
-                ScalarMappable(norm=img.norm, cmap=img.cmap),
-                ticks=range(vmin, vmax+1, 1))
-    cobar.ax.tick_params(size=0)
-    cobar.set_label('Log(Intensity) (A. U.)', rotation=270, labelpad = 30)
+    #cobar = fig.colorbar(
+    #            ScalarMappable(norm=img.norm, cmap=img.cmap),
+    #            ticks=range(vmin, vmax+1, 1))
+    #cobar.ax.tick_params(size=0)
+    #cobar.set_label('Log(Intensity) (A. U.)', rotation=270, labelpad = 30)
     #plt.axis('square')
     #plt.subplots_adjust(bottom=0.15, left=0.2)
     ax.set_xlabel(r"\rm Q$_"+q_2[-1]+r"$ $(\rm\AA^{-1})$")
     ax.set_ylabel(r"\rm Q$_"+q_1[-1]+r"$ $(\rm\AA^{-1})$")
-    ax.set_title(spot)
+    #plt.axis("square")
+    #ax.set_title(spot)
     output_file_name = file_name[:-7] + q_1 + '_v_' + q_2
     output_file_type = '.png'
+    return fig, ax
 
 #plt.savefig(existential_check(output_file_name, output_file_type, output_folder), bbox_inches='tight')
+    show_plot = False
     if show_plot == True:
         plt.show()
     else:

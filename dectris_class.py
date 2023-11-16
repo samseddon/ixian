@@ -5,7 +5,7 @@ import fabio
 import math
 import numpy as np
 from numba import jit
-from equations import calc_qx, calc_qy, calc_qz
+from equations import calc_qx, calc_qy, calc_qz, find_q_linear_fast
 """
 Created on Wed Jan 11 14:51:58 2023
 
@@ -13,45 +13,87 @@ Created on Wed Jan 11 14:51:58 2023
 """
 
 class Q_Space():
-    def __init__(self, scan_num, spot_dict, directory):
+    def __init__(self, scan_num, spot_dict, directory, symmetric):
         self.scan_num = scan_num
         self.spot_dict = spot_dict
         self.directory = directory
         
         self.qlim_dict = self.qlim()
-        print(self.qlim_dict) 
         self.QX_MIN = self.qlim_dict["qx_min"]
         self.QX_MAX = self.qlim_dict["qx_max"]
         self.QY_MIN = self.qlim_dict["qy_min"]
         self.QY_MAX = self.qlim_dict["qy_max"]
         self.QZ_MIN = self.qlim_dict["qz_min"]
         self.QZ_MAX = self.qlim_dict["qz_max"]
+        self.NX_PTS = self.qlim_dict["nx_pts"]
+        self.NY_PTS = self.qlim_dict["ny_pts"]
+        self.NZ_PTS = self.qlim_dict["nz_pts"]
         self.NR_PTS = self.qlim_dict["nr_pts"]
-        self.QX_GRAD = (self.QX_MAX-self.QX_MIN) / (self.NR_PTS - 1)
-        self.QY_GRAD = (self.QY_MAX-self.QY_MIN) / (self.NR_PTS - 1)
-        self.QZ_GRAD = (self.QZ_MAX-self.QZ_MIN) / (self.NR_PTS - 1)
-
-#        self.NR_PTS = 84
-        self.data = np.zeros((self.NR_PTS,                           
-                              self.NR_PTS,                           
-                              self.NR_PTS))                          
+                           
         
-        self.q_idx = np.zeros((self.NR_PTS,                           
-                               self.NR_PTS,                           
-                               self.NR_PTS))                          
+        if symmetric == True:
+            self.QX_GRAD = (self.QX_MAX-self.QX_MIN) / (self.NR_PTS - 1)
+            self.QY_GRAD = (self.QY_MAX-self.QY_MIN) / (self.NR_PTS - 1)
+            self.QZ_GRAD = (self.QZ_MAX-self.QZ_MIN) / (self.NR_PTS - 1)
+    
+    #        self.NR_PTS = 84
+            self.data = np.zeros((self.NR_PTS,                           
+                                  self.NR_PTS,                           
+                                  self.NR_PTS))                          
+            
+            self.q_idx = np.zeros((self.NR_PTS,                           
+                                   self.NR_PTS,                           
+                                   self.NR_PTS))                          
+    
+    
+            self.q_x = np.linspace(self.QX_MIN,                       
+                                   self.QX_MAX,                       
+                                   self.NR_PTS)                       
+                                                                                   
+            self.q_y = np.linspace(self.QY_MIN,                       
+                                   self.QY_MAX,                       
+                                   self.NR_PTS)                       
+                                                                                   
+            self.q_z = np.linspace(self.QZ_MIN,                       
+                                   self.QZ_MAX,                       
+                                   self.NR_PTS)
 
+        else:
 
-        self.q_x = np.linspace(self.QX_MIN,                       
-                               self.QX_MAX,                       
-                               self.NR_PTS)                       
-                                                                               
-        self.q_y = np.linspace(self.QY_MIN,                       
-                               self.QY_MAX,                       
-                               self.NR_PTS)                       
-                                                                               
-        self.q_z = np.linspace(self.QZ_MIN,                       
-                               self.QZ_MAX,                       
-                               self.NR_PTS)
+            self.QX_GRAD = (self.QX_MAX-self.QX_MIN) / (self.NX_PTS - 1)
+            self.QY_GRAD = (self.QY_MAX-self.QY_MIN) / (self.NY_PTS - 1)
+            self.QZ_GRAD = (self.QZ_MAX-self.QZ_MIN) / (self.NZ_PTS - 1)
+    
+    #        self.NR_PTS = 84
+            self.data = np.zeros((self.NX_PTS,                           
+                                  self.NY_PTS,                           
+                                  self.NZ_PTS))                          
+            
+            self.q_idx = np.zeros((self.NX_PTS,                           
+                                   self.NY_PTS,                           
+                                   self.NZ_PTS))                          
+    
+    
+            self.q_x = np.linspace(self.QX_MIN,                       
+                                   self.QX_MAX,                       
+                                   self.NX_PTS)                       
+                                                                                   
+            self.q_y = np.linspace(self.QY_MIN,                       
+                                   self.QY_MAX,                       
+                                   self.NY_PTS)                       
+                                                                                   
+            self.q_z = np.linspace(self.QZ_MIN,                       
+                                   self.QZ_MAX,                       
+                                   self.NZ_PTS)
+        self.find_q_lin = [self.QX_MAX,
+                           self.QY_MAX,
+                           self.QZ_MAX,
+                           self.QX_MIN,
+                           self.QY_MIN,
+                           self.QZ_MIN,
+                           self.QX_GRAD,
+                           self.QY_GRAD,
+                           self.QZ_GRAD]
 
 
     def normalise_3D(self):
@@ -84,7 +126,9 @@ class Q_Space():
         for coordinate_1 in range(np.shape(dec_image.data)[1]):
             for coordinate_2 in range(np.shape(dec_image.data)[0]):
 #                Q_index_1 = self.find_q_index(dec_image.Q_coords[coordinate_1][coordinate_2])
-                Q_index = self.find_q_linear(dec_image.Q_coords[coordinate_1][coordinate_2])
+                #Q_index = self.find_q_linear(dec_image.Q_coords[coordinate_1][coordinate_2])
+                Q_index = find_q_linear_fast(*dec_image.Q_coords[coordinate_1][coordinate_2], *self.find_q_lin)
+                
                 if Q_index[0] == False:
                     pass
                 else:
@@ -256,14 +300,21 @@ class Dectris_Image():
 
 
     def slice_and_dice(self, file):
-        data = np.concatenate((file.data[:self.DEADROW1 - 1, :],
-                    file.data[self.DEADROW2 + 1:self.DEADROW3 - 1, :],
-                    file.data[self.DEADROW4 + 1:, :]), axis=0)
-        two_theta_range_new = np.concatenate((
-                      self.two_theta_horizontal_range[:self.DEADROW1 - 1],
-                      self.two_theta_horizontal_range[self.DEADROW2 
-                                                     + 1:self.DEADROW3 - 1],
-                      self.two_theta_horizontal_range[self.DEADROW4 + 1:]))
+#        plt.figure()
+#        plt.imshow(file.data)#
+#        plt.show()
+        data = file.data
+#        data = np.concatenate((file.data[:self.DEADROW1 - 1, :],
+#                    file.data[self.DEADROW2 + 1:self.DEADROW3 - 1, :],
+#                    file.data[self.DEADROW4 + 1:, :]), axis=0)
+#        plt.imshow(data)
+#        plt.show()
+        two_theta_range_new = np.array(self.two_theta_horizontal_range)
+#        two_theta_range_new = np.concatenate((
+#                      self.two_theta_horizontal_range[:self.DEADROW1 - 1],
+#                      self.two_theta_horizontal_range[self.DEADROW2 
+#                                                     + 1:self.DEADROW3 - 1],
+#                      self.two_theta_horizontal_range[self.DEADROW4 + 1:]))
         data = np.array(data)
         self.data = data[self.REALY_LIM_LOW:self.REALY_LIM_HIG
                         ,self.REALX_LIM_LOW:self.REALX_LIM_HIG]

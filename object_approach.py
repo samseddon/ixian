@@ -18,11 +18,7 @@ Created on Wed Jan 11 14:49:21 2023
 @author: samseddon
 """
 
-def data_fill(directory,output_folder,file_reference,scan_num,create_files):
-    print("Function" \
-        + str(inspect.currentframe()).split(",")[-1][5:-1] \
-        + " called from"\
-        + str(inspect.currentframe()).split(",")[1])
+def omega_scan(directory,output_folder,file_reference,scan_num,create_files):
     """ The main function to call, this finds the relevant data files, writes
     (if create_files = True) and reads the q_limits, initiles an array in 
     q-space, populates it with pixels and normalises the result. 
@@ -43,25 +39,22 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
                     if int(c.split("_")[-2]) \
                     in scan_num]
     
-    temp= []
-    mag = []
     
     with open(directory+'user_defined_parameters/spot_dict.txt','r') as inf:
         spot_dict = eval(inf.read())
     
     print('\nCreating parameter files')
     
-    if create_files == True:
-        filename = directory\
-                   + 'user_defined_parameters/qlim/qlim_'\
-                   + spot_dict[str(scan_num[0])]\
-                   + '.txt'
-        
-        parameter_setup(directory,
-                        master_files, 
-                        file_reference,
-                        spot_dict,
-                        scan_num)
+    filename = directory\
+               + 'user_defined_parameters/qlim/qlim_'\
+               + spot_dict[str(scan_num[0])]\
+               + '.txt'
+    
+    parameter_setup(directory,
+                    master_files, 
+                    file_reference,
+                    spot_dict,
+                    scan_num)
 
 
     param = param_read(spot_dict,
@@ -69,11 +62,9 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
                        directory)
         
     print('\nSlicing images and calulating pixel Q values..')
-    
-    q_unsorted = []
-    limit_dict = []
-    all_images = []
     start_t = time.time()
+    
+    all_images = []
     major_list = []
     pickle_names = []
     for image_number in range(len(master_files)):
@@ -86,8 +77,7 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
         pickle_names.append(temp_file_name)
     print("slicing and images took ",time.time() - start_t)                                    
     tim_check = time.time()
-#    for filename in pickle_names:
-#        calc_Q_coordinates(filename)
+    
     pool = Pool()
     multiprocessing_result = pool.imap_unordered(calc_Q_coordinates, pickle_names)
     all_images = list(multiprocessing_result)
@@ -117,24 +107,10 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
         unique_elements_z = np.unique(element[2])
         for number in element[2]:
             set_z.add(number)
-    
-    NR_PTS = min(len(set_x), len(set_y), len(set_z))
-#   for _ in range(len(total_list)):                                                     
-#           x.append(total_list[_][0])                                                       
-#           y.append(total_list[_][1])                                                       
-#           z.append(total_list[_][2])                                                       
-#    print(len(np.unique(np.round(x,3))))
-#    print(len(np.unique(np.round(y,3))))  
-#    print(len(set_x), len(set_y), len(set_z))
-#    print(len(np.unique(np.round(x,3))),
-
-    #              len(np.unique(np.round(y,3))),
-    #              len(np.unique(np.round(z,3))))
-    #NR_PTS = (min(len(np.unique(np.round(x,3))),
-    #              len(np.unique(np.round(y,3))),
-    #              len(np.unique(np.round(z,3)))))
-#    NR_PTS = min(possible_NR_PTS)
-    print(NR_PTS)
+     
+    NX_PTS = len(set_x)
+    NY_PTS = len(set_y)
+    NZ_PTS = len(set_z)
     print("NR_PTS Calculation took ", time.time() - tim_check)
     print('\nFinding q limits from sliced data and optimising Q_space mesh')
     qx_min = []
@@ -159,18 +135,19 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
     # NOTE here the qmax/qlim are found, needs to be put into a function.
     Q_max = [np.amax(qx_max), np.amax(qy_max), np.amax(qz_max)]
     Q_min = [np.amin(qx_min), np.amin(qy_min), np.amin(qz_min)]
-    print(Q_max, Q_min)
 
-    if create_files == True:
-              # or os.path.exists("local/qlim"\
-              #                               + "qlim_"\
-              #                               + str(scan_num[0])\
-              #                               + ".txt")\
-              #                               == False:                 
-        Q_limit_dict_maker(directory, spot_dict, scan_num, Q_max, Q_min, NR_PTS)
+    Q_limit_dict_maker(directory, 
+                       spot_dict, 
+                       scan_num, 
+                       Q_max, 
+                       Q_min, 
+                       NX_PTS,
+                       NY_PTS,
+                       NZ_PTS)
+    
     print("found q limits in this time", time.time() - tim_check)
 
-    q_space = Q_Space(scan_num, spot_dict, directory)
+    q_space = Q_Space(scan_num, spot_dict, directory, symmetric = True)
     new_start_t = time.time()
     print('Populating Q_space with pixels')
     for filename in enumerate(pickle_names):
@@ -196,7 +173,15 @@ def data_fill(directory,output_folder,file_reference,scan_num,create_files):
 #
 
 
-def Q_limit_dict_maker(directory, spot_dict, scan_num, Q_max, Q_min, NR_PTS):  
+def Q_limit_dict_maker(directory,
+                       spot_dict,
+                       scan_num,
+                       Q_max,
+                       Q_min,
+                       NX_PTS,
+                       NY_PTS, 
+                       NZ_PTS):
+
     qlim_dict = {'qz_min' : Q_min[2],                                          
                   'qz_max' : Q_max[2],                                         
                   'qx_min' : Q_min[0],                                         
@@ -204,7 +189,10 @@ def Q_limit_dict_maker(directory, spot_dict, scan_num, Q_max, Q_min, NR_PTS):
                   'qy_min' : Q_min[1],                                         
                   'qy_max' : Q_max[1]}                                         
     
-    qlim_dict['nr_pts'] = int(0.75*NR_PTS)                                     
+    qlim_dict['nx_pts'] = int(0.75*NX_PTS)                                     
+    qlim_dict['ny_pts'] = int(0.75*NY_PTS)                                     
+    qlim_dict['nz_pts'] = int(0.75*NZ_PTS)                                     
+    qlim_dict["nr_pts"] = int(0.75 * min(NX_PTS, NY_PTS, NZ_PTS))
     qlim_dir = "local/qlim/"
    
     if os.path.exists(qlim_dir) == False:
