@@ -203,10 +203,16 @@ class Dectris_Image():
         self.DEADROW2 =      self.param['DeadRow2']                                               
         self.DEADROW3 =      self.param['DeadRow3']                                               
         self.DEADROW4 =      self.param['DeadRow4']   
-        self.REALX_LIM_LOW = self.param['realx_lim_low']                                     
-        self.REALX_LIM_HIG = self.param['realx_lim_hig']                                     
-        self.REALY_LIM_LOW = self.param['realy_lim_low']                                     
-        self.REALY_LIM_HIG = self.param['realy_lim_hig']  
+        if self.param["whole_image"] == True:
+            self.REALX_LIM_LOW = 0
+            self.REALX_LIM_HIG = self.param["ShotHeight"] 
+            self.REALY_LIM_LOW = 0
+            self.REALY_LIM_HIG = self.param["ShotHeight_y"]
+        else:
+            self.REALX_LIM_LOW = self.param['realx_lim_low']                                     
+            self.REALX_LIM_HIG = self.param['realx_lim_hig']                                     
+            self.REALY_LIM_LOW = self.param['realy_lim_low']                                     
+            self.REALY_LIM_HIG = self.param['realy_lim_hig']  
 
         ub = np.array(file.header.get('UB_pos').split(' '))
         self.ub = ub.astype(float)
@@ -315,12 +321,12 @@ class Dectris_Image():
 #                                                     + 1:self.DEADROW3 - 1],
 #                      self.two_theta_horizontal_range[self.DEADROW4 + 1:]))
         data = np.array(data)
-        self.data = data[self.REALY_LIM_LOW:self.REALY_LIM_HIG
-                        ,self.REALX_LIM_LOW:self.REALX_LIM_HIG]
+        self.data = data[self.REALX_LIM_LOW:self.REALX_LIM_HIG
+                        ,self.REALY_LIM_LOW:self.REALY_LIM_HIG]
         self.two_theta_horizontal_range =\
-                two_theta_range_new[self.REALY_LIM_LOW:self.REALY_LIM_HIG]
+                two_theta_range_new[self.REALX_LIM_LOW:self.REALX_LIM_HIG]
         self.two_theta_vertical_range =\
-          self.two_theta_vertical_range[self.REALX_LIM_LOW:self.REALX_LIM_HIG]
+          self.two_theta_vertical_range[self.REALY_LIM_LOW:self.REALY_LIM_HIG]
 
 
     def generate_two_thetas(self):

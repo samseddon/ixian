@@ -42,6 +42,8 @@ def main():
         os.mkdir("local/temp")  
     if os.path.exists("local/qlim/") ==  False:
         os.mkdir("local/qlim")  
+
+
     omega_scan(directory, file_reference, scan_num, create_files = True)
     
 
