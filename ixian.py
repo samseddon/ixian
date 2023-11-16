@@ -39,6 +39,8 @@ def main():
         os.mkdir(directory + "processed_files/")
     if os.path.exists("local/temp/") ==  False:
         os.mkdir("local/temp/")  
+    if os.path.exists("local/qlim/") ==  False:
+        os.mkdir("local/qlim/")  
     omega_scan(directory, file_reference, scan_num, create_files = True)
     
 
@@ -74,7 +76,6 @@ def main():
    #             ticks=range(vmin, vmax+1, 1))
    # #cobar.ax_xy.tick_params(size=0)
    # cobar.set_label('Log(Intensity) (A. U.)', rotation=270, labelpad = 30)
-    plt.savefig("Marek_example.png", bbox_inches='tight')
     plt.show()
     #threeD_rsm_plot(f_1)
 #    axis_1 = 'qy'
