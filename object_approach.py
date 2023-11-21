@@ -30,7 +30,9 @@ def omega_scan(directory, file_reference, scan_num, create_files):
                create_files(bool)     : should be True for first use, allows
                                         functions for given 
     """
+
     files_location = os.listdir(directory)
+    print(files_location)
     master_files = [m for m in files_location \
                     if m.startswith(file_reference) \
                     and m.endswith(".edf")]

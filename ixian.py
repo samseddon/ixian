@@ -33,7 +33,7 @@ def main():
     directory="/home/sseddon/Downloads/ixian_testdata/"
     file_reference = "MAG001"
    # #scan_nums = [[153],[154]]
-    scan_num = [194]
+    scan_num = [156]
 
     if os.path.exists(directory + "processed_files/") ==  False:
         os.mkdir(directory + "processed_files/")
