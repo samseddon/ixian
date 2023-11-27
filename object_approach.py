@@ -30,36 +30,13 @@ def omega_scan(directory, file_reference, scan_num, create_files):
                create_files(bool)     : should be True for first use, allows
                                         functions for given 
     """
-
-    files_location = os.listdir(directory)
-    print(files_location)
-    master_files = [m for m in files_location \
-                    if m.startswith(file_reference) \
-                    and m.endswith(".edf")]
-    master_files = [c for c in master_files \
-                    if int(c.split("_")[-2]) \
-                    in scan_num]
-    
-    
-#    with open(directory+'user_defined_parameters/spot_dict.txt','r') as inf:
-#        spot_dict = eval(inf.read())
     
     print('\nCreating parameter files')
     
-    filename = directory\
-               + 'user_defined_parameters/qlim/qlim_'\
-               + str(scan_num[0])\
-               + '.txt'
     
-    param = parameter_setup(directory,
-                    master_files, 
-                    file_reference,
-                    scan_num)
-    # NOTE proceed from here removing
-
-    #param = param_read(spot_dict,
-    #                   scan_num[0],
-    #                   directory)
+    final_file_list, param = XMaS_parameter_setup(directory,
+                                                  file_reference,
+                                                  scan_num)
         
     print('\nSlicing images and calulating pixel Q values..')
     start_t = time.time()
@@ -67,10 +44,10 @@ def omega_scan(directory, file_reference, scan_num, create_files):
     all_images = []
     major_list = []
     pickle_names = []
-    for image_number in range(len(master_files)):
+    for image_number in range(len(final_file_list)):
         major_list.append([file_reference, image_number, \
-                directory, master_files, param])
-    for image_number in range(len(master_files)):
+                directory, final_file_list, param])
+    for image_number in range(len(final_file_list)):
         temp_file_name = "local/temp/" + str(image_number) + "_dec_class" + ".pickle"
         temp_file = Dectris_Image(major_list[image_number])
         pickle_jar(temp_file_name, temp_file)
@@ -152,7 +129,7 @@ def omega_scan(directory, file_reference, scan_num, create_files):
     for filename in enumerate(pickle_names):
         dec_image = pickle_unjar(filename[1])
         q_space.populate_3D(dec_image)
-        progress_bar(filename[0] + 1,len(master_files),new_start_t)
+        progress_bar(filename[0] + 1,len(final_file_list),new_start_t)
 
 
     q_space.normalise_3D()
@@ -205,37 +182,11 @@ def Q_limit_dict_maker(directory,
         inf.write(str(qlim_dict))                                              
     print('Created file',filename)   
 
-#def param_read(spot_dict,scan_num,directory):
-#    print("Function" \
-#        + str(inspect.currentframe()).split(",")[-1][5:-1] \
-#        + " called from"\
-#        + str(inspect.currentframe()).split(",")[1])
-#    """ Takes the spot string defined in the spot dictionary and opens the 
-#    corresponding parameter file, returning it.
-#           Parameters: 
-#               spot_dict(dict)        : dictionary of scans and spots
-#               scan_num(array)        : array of scan numbers being read
-#               directory(string)      : string pointing to data directory 
-#                                        structure
-#           Returns:
-#               newly_read_param_file  : as it says on the tin
-#    """
-#    import_var = directory\
-#                 + "user_defined_parameters/param/param_" \
-#                 + spot_dict[str(scan_num)]\
-#                 + '.txt'
-#    if os.path.exists(import_var)==False:
-#        raise(ValueError("Param_dict for spot non-existant"))
-#    
-#    with open(import_var,'r') as inf:
-#        newly_read_param_dict = eval(inf.read())
-#    return newly_read_param_dict
-
-
-def parameter_setup(directory,
-                    master_files,
-                    file_reference,
-                    scan_num):
+def XMaS_parameter_setup(directory,
+                         file_reference,
+                         scan_num,
+                         window_help = False):
+                               
     print("Function" \
         + str(inspect.currentframe()).split(",")[-1][5:-1] \
         + " called from"\
@@ -247,7 +198,7 @@ def parameter_setup(directory,
     open the now written spot parameters and tweak the last 4 parameters
             Parameters: 
                directory(string)      : string pointing to data directory 
-               master_files(list)     : list of files for given scan number
+               final_file_list(list)     : list of files for given scan number
                file_reference(string) : unique file identifier for a given 
                                         experiment
                spot_dict(dict)        : dictionary of scans and spots
@@ -257,31 +208,77 @@ def parameter_setup(directory,
                + '/user_defined_parameters/param/param_' \
                + str(scan_num[0]) \
                + '.txt' 
+
+    list_of_all_files = os.listdir(directory)
+     
+    experiment_files = [file for file in list_of_all_files \
+                    if file.startswith(file_reference) \
+                    and file.endswith(".edf")]
     
-    with open('setup/standard_param.txt', 'r') as inf:
+    final_file_list = [file for file in experiment_files \
+                    if int(file.split("_")[-2]) \
+                    in scan_num]
+    # final_file_list a list of all files from relevant scan
+    # NOTE -2 is a magic number, based on the XMaS file saving format
+    
+    with open('setup/XMaS_standard_param.txt', 'r') as inf:
         gen_param = eval(inf.read())
-    
-    REALX_LIM_LOW = gen_param['realx_lim_low'] 
-    REALX_LIM_HIG = gen_param['realx_lim_hig']
-    REALY_LIM_LOW = gen_param['realy_lim_low']
-    REALY_LIM_HIG = gen_param['realy_lim_hig']
+    REAL_HOR_LIM_LOW = gen_param['REAL_HOR_LIM_LOW'] 
+    REAL_HOR_LIM_HIG = gen_param['REAL_HOR_LIM_HIG']
+    REAL_VER_LIM_LOW = gen_param['REAL_VER_LIM_LOW']
+    REAL_VER_LIM_HIG = gen_param['REAL_VER_LIM_HIG']
 #
-#    k = int(len(master_files)/4)
-#    f = fabio.open(os.path.join(directory+'data/', master_files[k]))
-#    f1 = f.data
-#    f.close()
+    if window_help == True:
+        final_file_list = sorted(final_file_list)
+        k = int(len(final_file_list)/4)
+        f = fabio.open(os.path.join(directory, final_file_list[k]))
+        f0 = f.data
+        f.close()
+        
+        k = int(len(final_file_list)/2)
+        f = fabio.open(os.path.join(directory, final_file_list[k]))
+        f1 = f.data    
+        f.close()
+        
+        k = int(3*len(final_file_list)/4)
+        f = fabio.open(os.path.join(directory, final_file_list[k]))
+        f2 = f.data    
+        f.close()
+        fig = plt.figure(figsize = (12,5))
+        ax_0 = plt.subplot(131, aspect = "equal")#, autoscale_on=False)#, adjustable='box-forced')
+        ax_1 = plt.subplot(132, aspect = "equal")#, autoscale_on=False)#, adjustable='box-forced')
+        ax_2 = plt.subplot(133, aspect = "equal")#, autoscale_on=False)#, adjustable='box-forced')
+        ax_0.imshow(f0, origin = "lower")
+        ax_1.imshow(f1, origin = "lower")
+        ax_2.imshow(f2, origin = "lower")
+        rect0 = patches.Rectangle((REAL_HOR_LIM_LOW, \
+                                   REAL_VER_LIM_LOW),\
+                                  REAL_HOR_LIM_HIG-REAL_HOR_LIM_LOW,\
+                                  REAL_VER_LIM_HIG-REAL_VER_LIM_LOW,\
+                                  linewidth=1,\
+                                  edgecolor='r',\
+                                  facecolor='none')
+        rect1 = patches.Rectangle((REAL_HOR_LIM_LOW, \
+                                   REAL_VER_LIM_LOW),\
+                                  REAL_HOR_LIM_HIG-REAL_HOR_LIM_LOW,\
+                                  REAL_VER_LIM_HIG-REAL_VER_LIM_LOW,\
+                                  linewidth=1,\
+                                  edgecolor='r',\
+                                  facecolor='none')
+        rect2 = patches.Rectangle((REAL_HOR_LIM_LOW, \
+                                   REAL_VER_LIM_LOW),\
+                                  REAL_HOR_LIM_HIG-REAL_HOR_LIM_LOW,\
+                                  REAL_VER_LIM_HIG-REAL_VER_LIM_LOW,\
+                                  linewidth=1,\
+                                  edgecolor='r',\
+                                  facecolor='none')
+        ax_0.add_patch(rect0) 
+        ax_1.add_patch(rect1) 
+        ax_2.add_patch(rect2) 
+        
+        plt.show()
 #    
-#    k = int(len(master_files)/2)
-#    f = fabio.open(os.path.join(directory+'data/', master_files[k]))
-#    f2 = f.data    
-#    f.close()
-#    
-#    k = int(3*len(master_files)/4)
-#    f = fabio.open(os.path.join(directory+'data/', master_files[k]))
-#    f3 = f.data    
-#    f.close()
-#    
-    return gen_param
+    return final_file_list, gen_param
     #with open(filename,'w') as inf:
     #    inf.write(str(gen_param))
     #print('Created file',

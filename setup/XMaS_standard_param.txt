@@ -1,0 +1,12 @@
+{        'TOTAL_PIXELS_HOR': 487, # Total number of rows in camera image (including dead pixels)
+         'TOTAL_PIXELS_VER': 619,# Total number of Columns in camera image
+         'ZERO_PIXEL_HOR' : 252,  # Horizontal Pixel corresponding to "zero" for the experiment
+         'ZERO_PIXEL_VER' : 307, # Vertical Pixel corresponding to "zero" for the experiment
+	 'DET_ANG' : 0.01122,
+         'CHI_OFFSET' : 0,   #neccesary for the equations but typically zero
+         'WHOLE_IMAGE': True, #much quicker to make "False" and define a ROI to process rather than the entire image
+         'REAL_HOR_LIM_LOW' : 200, 
+         'REAL_HOR_LIM_HIG' : 300,
+         'REAL_VER_LIM_LOW' : 300, 
+         'REAL_VER_LIM_HIG' : 350, 
+         }

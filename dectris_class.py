@@ -199,20 +199,20 @@ class Dectris_Image():
         file = fabio.open(os.path.join(self.directory, 
                                             self.master_files[self.image_number]))
         self.param = major_list[-1]
-        self.DEADROW1 =      self.param['DeadRow1']                                               
-        self.DEADROW2 =      self.param['DeadRow2']                                               
-        self.DEADROW3 =      self.param['DeadRow3']                                               
-        self.DEADROW4 =      self.param['DeadRow4']   
-        if self.param["whole_image"] == True:
-            self.REALX_LIM_LOW = 0
-            self.REALX_LIM_HIG = self.param["ShotHeight"] 
-            self.REALY_LIM_LOW = 0
-            self.REALY_LIM_HIG = self.param["ShotHeight_y"]
+#        self.DEADROW1 =      self.param['DeadRow1']                                               
+#        self.DEADROW2 =      self.param['DeadRow2']                                               
+#        self.DEADROW3 =      self.param['DeadRow3']                                               
+#        self.DEADROW4 =      self.param['DeadRow4']   
+        if self.param["WHOLE_IMAGE"] == True:
+            self.REAL_HOR_LIM_LOW = 0
+            self.REAL_HOR_LIM_HIG = self.param["TOTAL_PIXELS_HOR"] 
+            self.REAL_VER_LIM_LOW = 0
+            self.REAL_VER_LIM_HIG = self.param["TOTAL_PIXELS_VER"]
         else:
-            self.REALX_LIM_LOW = self.param['realx_lim_low']                                     
-            self.REALX_LIM_HIG = self.param['realx_lim_hig']                                     
-            self.REALY_LIM_LOW = self.param['realy_lim_low']                                     
-            self.REALY_LIM_HIG = self.param['realy_lim_hig']  
+            self.REAL_HOR_LIM_LOW = self.param['REAL_HOR_LIM_LOW']
+            self.REAL_HOR_LIM_HIG = self.param['REAL_HOR_LIM_HIG']                                     
+            self.REAL_VER_LIM_LOW = self.param['REAL_VER_LIM_LOW']                                     
+            self.REAL_VER_LIM_HIG = self.param['REAL_VER_LIM_HIG']  
 
         ub = np.array(file.header.get('UB_pos').split(' '))
         self.ub = ub.astype(float)
@@ -274,27 +274,6 @@ class Dectris_Image():
                (np.amin(self.Q_z), np.amax(self.Q_z))
 
 
-#    def calc_Q_coordinates(self):
-#        for coordinate_1 in range(np.shape(self.data)[1]):
-#            row = []
-#            row_x = []
-#            row_y = []
-#            row_z = []
-#
-#            for coordinate_2 in range(np.shape(self.data)[0]):
-#                self.pixel_list.append([calc_qx(self.WAVELENGTH, self.OMEGA, self.two_theta_horizontal_range[coordinate_2], self.two_theta_vertical_range[coordinate_1]),
-#                                 calc_qy(self.WAVELENGTH, self.OMEGA, self.two_theta_horizontal_range[coordinate_2], self.two_theta_vertical_range[coordinate_1]),
-#                                 calc_qz(self.WAVELENGTH, self.OMEGA, self.two_theta_horizontal_range[coordinate_2]),
-#                                 self.data[coordinate_2, coordinate_1]])
-#
-#                row_x.append(self.pixel_list[-1][0])
-#                row_y.append(self.pixel_list[-1][1])
-#                row_z.append(self.pixel_list[-1][2])
-#                row.append([row_x[-1], row_y[-1], row_z[-1]])
-#            self.Q_x.append(row_x)
-#            self.Q_y.append(row_y)
-#            self.Q_z.append(row_z)
-#            self.Q_coords.append(row)
 
     def omega_offsetter(self):
         if self.file_reference == "MAG001":
@@ -306,7 +285,7 @@ class Dectris_Image():
 
     def slice_and_dice(self, file):
 #        plt.figure()
-#        plt.imshow(file.data)#
+#        plt.imshow(file.data, origin = "lower")#
 #        plt.show()
         data = file.data
 #        data = np.concatenate((file.data[:self.DEADROW1 - 1, :],
@@ -321,25 +300,29 @@ class Dectris_Image():
 #                                                     + 1:self.DEADROW3 - 1],
 #                      self.two_theta_horizontal_range[self.DEADROW4 + 1:]))
         data = np.array(data)
-        self.data = data[self.REALX_LIM_LOW:self.REALX_LIM_HIG
-                        ,self.REALY_LIM_LOW:self.REALY_LIM_HIG]
+        self.data = data[self.REAL_VER_LIM_LOW:self.REAL_VER_LIM_HIG
+                        ,self.REAL_HOR_LIM_LOW:self.REAL_HOR_LIM_HIG]
+        
+#        plt.figure()
+#        plt.imshow(self.data)#
+#        plt.show()
         self.two_theta_horizontal_range =\
-                two_theta_range_new[self.REALX_LIM_LOW:self.REALX_LIM_HIG]
+                two_theta_range_new[self.REAL_VER_LIM_LOW:self.REAL_VER_LIM_HIG]
         self.two_theta_vertical_range =\
-          self.two_theta_vertical_range[self.REALY_LIM_LOW:self.REALY_LIM_HIG]
+          self.two_theta_vertical_range[self.REAL_HOR_LIM_LOW:self.REAL_HOR_LIM_HIG]
 
 
     def generate_two_thetas(self):
-        for pixel in range(self.param["ShotHeight"]):
+        for pixel in range(self.param["TOTAL_PIXELS_VER"]):
             self.two_theta_horizontal_range.append(self.TWO_THETA 
-                                            + (self.param["Zero_Pixel_Ver"] 
+                                            + (self.param["ZERO_PIXEL_VER"] 
                                             - float(pixel)) 
-                                            * self.param["det_ang"])
-        for pixel in range(self.param["ShotHeight_y"]):
-            self.two_theta_vertical_range.append((self.param['Zero_Pixel_Hor'] 
-                                                  - self.param['chi_offset'] 
+                                            * self.param["DET_ANG"])
+        for pixel in range(self.param["TOTAL_PIXELS_HOR"]):
+            self.two_theta_vertical_range.append((self.param['ZERO_PIXEL_HOR'] 
+                                                  - self.param['CHI_OFFSET'] 
                                                   - float(pixel)) 
-                                                 * self.param['det_ang'])
+                                                 * self.param['DET_ANG'])
 
     
     

@@ -6,34 +6,12 @@ from matplotlib.cm import ScalarMappable
 from rsm_object_plotter import file_checker,  rsm_plot, slicer_and_dicer_3000, test_slicer, threeD_rsm_plot
 from object_approach import omega_scan
 import matplotlib.pyplot as plt
-##
-
-## MAKE SURE DATA, WHEREVER IT IS, IS IN A FOLDER CALLED MATERIAL/DATA (IE magnetite/data) and also in magnetite is a folder called user_defined_parameters, as before
-
-##
-## NOTE test data entered here 
-#file_reference = "aV2O3R1"
-#directory = "/home/sseddon/Desktop/500GB/Data/XMaS/test_data/"
-#output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/test_data/processed_files/"
-#scan_num = [418,419]
-## NOTE K test run data ends here
 
 def main():
-#    # NOTE test data entered here 
-#    file_reference = "aV2O3R1"
-#    directory = "/home/sseddon/Documents/Local-data/test_data/"
-#    output_folder = directory + "processed_files/"
-#    scan_num = [418,419]
-#    # NOTE K test run data ends here
-#
-#    directory="/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/"    
-
-
-#output_folder = "/home/sseddon/Desktop/500GB/Data/XMaS/magnetite/processed_files_july23/"
+    
     directory="/home/sseddon/Downloads/ixian_testdata/"
     file_reference = "MAG001"
-   # #scan_nums = [[153],[154]]
-    scan_num = [156]
+    scan_num = [194]
 
     if os.path.exists(directory + "processed_files/") ==  False:
         os.mkdir(directory + "processed_files/")
