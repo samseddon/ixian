@@ -120,4 +120,3 @@ if __name__ == "__main__":
     scan_num = []
     scan_num = main(scan_num)
     add_history(scan_num)
-    
