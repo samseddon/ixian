@@ -16,10 +16,10 @@ from mpl_toolkits import mplot3d
 def file_checker(s_num, s_ind, input_path):
     """
     """
-    print("Function" \
-            + str(inspect.currentframe()).split(",")[-1][5:-1] \
-            + " called from"\
-            + str(inspect.currentframe()).split(",")[1])
+#    print("Function" \
+#            + str(inspect.currentframe()).split(",")[-1][5:-1] \
+#            + " called from"\
+#            + str(inspect.currentframe()).split(",")[1])
     files = glob.glob(os.path.join(input_path, str(s_num) + '*'))
     file_name = max(files, key=os.path.getctime)
     file_name = file_name[len(input_path):]
@@ -286,7 +286,6 @@ def rsm_plot(f_1,
              q_2, 
              q_3_lim, 
              output_folder, 
-             directory, 
              scan_num, 
              fig,
              ax,

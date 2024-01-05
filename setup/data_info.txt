@@ -1,0 +1,1 @@
+{'directory': '/home/sseddon/Downloads/ixian_testdata/', 'file_reference': 'MAG001'}

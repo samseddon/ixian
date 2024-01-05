@@ -4,7 +4,7 @@
          'ZERO_PIXEL_VER' : 307, # Vertical Pixel corresponding to "zero" for the experiment
 	 'DET_ANG' : 0.01122,
          'CHI_OFFSET' : 0,   #neccesary for the equations but typically zero
-         'WHOLE_IMAGE': True, #much quicker to make "False" and define a ROI to process rather than the entire image
+         'WHOLE_IMAGE': False, #much quicker to make "False" and define a ROI to process rather than the entire image
          'REAL_HOR_LIM_LOW' : 200, 
          'REAL_HOR_LIM_HIG' : 300,
          'REAL_VER_LIM_LOW' : 300, 

@@ -139,7 +139,7 @@ def omega_scan(directory, file_reference, scan_num, create_files):
     suffix = '.pickle'
     new_filename = existential_check(orig_filename,
                                      suffix, 
-                                     directory + 'processed_files/')
+                                     "local/processed_files/")
     #NOTE make processed files folder here
     with open(new_filename,'wb') as handle:
         pickle.dump(q_space, handle, protocol=pickle.HIGHEST_PROTOCOL)

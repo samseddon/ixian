@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+plt.style.use("seddon_TUD")
 
 """
 Created on Thu Jan 12 09:32:48 2023
@@ -113,13 +114,14 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(figsize=(6, 1))
     fig.subplots_adjust(bottom=0.5)
     # NOTE this will plot will colour bar, put desired colour bar here as cmap = 
-    cmap = code_TUD_cbar
+    cmap = mag_sky_replacer_cbar
  #   cmap = mag_sky_replacer_cbar
     norm = mpl.colors.Normalize(vmin=5, vmax=10)  
     
     cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap,
                                     norm=norm,    
                                     orientation="horizontal")
-    cb1.set_label("Some Units")
+    cb1.set_ticks([])
+    plt.savefig("cbar.png")
     plt.show()                              
 
