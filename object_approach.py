@@ -17,6 +17,19 @@ Created on Wed Jan 11 14:49:21 2023
 @author: samseddon
 """
 
+def image_read(final_file_list, param, file_reference, directory):
+    major_list = []
+    pickle_names = []
+    for image_number in range(len(final_file_list)):
+        major_list.append([file_reference, image_number, \
+                directory, final_file_list, param])
+    for image_number in range(len(final_file_list)):
+        temp_file_name = "local/temp/" + str(image_number) + "_dec_class" + ".pickle"
+        temp_file = Dectris_Image(major_list[image_number])
+        pickle_jar(temp_file_name, temp_file)
+        pickle_names.append(temp_file_name)
+    return pickle_names
+
 def omega_scan(directory, file_reference, scan_num, create_files):
     """ The main function to call, this finds the relevant data files, writes
     (if create_files = True) and reads the q_limits, initiles an array in 
@@ -38,23 +51,11 @@ def omega_scan(directory, file_reference, scan_num, create_files):
                                                   file_reference,
                                                   scan_num)
         
-    print('\nSlicing images and calulating pixel Q values..')
+    print(final_file_list)
     start_t = time.time()
     
-    all_images = []
-    major_list = []
-    pickle_names = []
-    for image_number in range(len(final_file_list)):
-        major_list.append([file_reference, image_number, \
-                directory, final_file_list, param])
-    for image_number in range(len(final_file_list)):
-        temp_file_name = "local/temp/" + str(image_number) + "_dec_class" + ".pickle"
-        temp_file = Dectris_Image(major_list[image_number])
-        pickle_jar(temp_file_name, temp_file)
-        pickle_names.append(temp_file_name)
-    print("slicing and images took ",time.time() - start_t)                                    
     tim_check = time.time()
-    
+    pickle_names = image_read(final_file_list, param, file_reference, directory) 
     pool = Pool()
     multiprocessing_result = pool.imap_unordered(calc_Q_coordinates, pickle_names)
     all_images = list(multiprocessing_result)
@@ -62,6 +63,8 @@ def omega_scan(directory, file_reference, scan_num, create_files):
     tim_check = time.time()
     possible_NR_PTS = []
     c = 0
+    print(pickle_names[-1])
+    pickle_names = [pickle_names[-1]]
 
     multiprocessing_result = pool.imap_unordered(nr_pts_finder, pickle_names)
     master_sets = list(multiprocessing_result)

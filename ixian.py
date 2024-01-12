@@ -15,14 +15,22 @@ check if optimal Qspace already exists
 '''
 
 def main(scan_num):
+    if "-h" in sys.argv and os.path.exists("setup/history.txt"):
+        scan_num = load_scan_num_history()
+    if os.path.exists("local/processed_files/") ==  False:
+       os.mkdir("local/processed_files/")
+    if os.path.exists("local/temp/") ==  False:
+        os.mkdir("local/")
+        os.mkdir("local/temp")  
+    if os.path.exists("local/qlim/") ==  False:
+        os.mkdir("local/qlim")  
+    
     if os.path.exists("setup/data_info.txt") == False \
             or "-dataset" in sys.argv:
                 data_setup()
 
     if "-oscan" in sys.argv:
-        if "-h" in sys.argv and os.path.exists("setup/history.txt"):
-            scan_num = load_scan_num_history()
-        else:
+        if "-h" not in sys.argv:
             scan_num = scan_num_input()
         with open("setup/data_info.txt","r") as inf:   
             dict1 = eval(inf.read())
@@ -32,13 +40,7 @@ def main(scan_num):
         
 
 
-        if os.path.exists("local/processed_files/") ==  False:
-            os.mkdir("local/processed_files/")
-        if os.path.exists("local/temp/") ==  False:
-            os.mkdir("local/")
-            os.mkdir("local/temp")  
-        if os.path.exists("local/qlim/") ==  False:
-            os.mkdir("local/qlim")  
+
         omega_scan(directory, file_reference, scan_num, create_files = True)
          
     if "-plot" in sys.argv:

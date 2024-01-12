@@ -368,6 +368,7 @@ def rsm_plot(f_1,
     elif q_3_assigned == 1:
         q1_q2_matrix = np.reshape(fin, (volume.shape[0], volume.shape[1]))
 
+    print(fin)
     mesh_q_1_min = np.min(fq_2)  # sets the minimum qx value for new mesh (np.min(fq_2) is the minimum of the input data)
     mesh_q_1_max = np.max(fq_2)  # sets the maximum qx value for new mesh (np.max(fq_2) is the maximum of the input data)
     mesh_q_2_min = np.min(fq_1)

@@ -157,36 +157,6 @@ class Q_Space():
         self.q_idx[indexes[0], indexes[1], indexes[2]] += 1
 
     
-    def find_q_index(self, coord):
-        qx = coord[0]
-        qy = coord[1]
-        qz = coord[2]
-        if qx < self.QX_MIN \
-                or qx > self.QX_MAX \
-                or qy < self.QY_MIN \
-                or qy > self.QY_MAX \
-                or qz < self.QZ_MIN \
-                or qz > self.QZ_MAX:
-            return (False,[0,0,0])
-        else:
-            for i_x in range(len(self.q_x)):
-                if(qx > self.q_x[i_x]):
-                     pass
-                else:
-                    break
-
-            for i_y in range(len(self.q_y)):
-                if(qy > self.q_y[i_y]):
-                    pass
-                else:
-                    break
-
-            for i_z in range(len(self.q_z)):
-                if(qz > self.q_z[i_z]):
-                    pass
-                else:
-                    break
-            return (True, [i_x, i_y, i_z])
 
 
 
