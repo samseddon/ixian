@@ -395,11 +395,11 @@ def rsm_plot(f_1,
     vmax = 6
     img = ax.contourf(grid_q, origin='lower',           
                         extent=[mesh_q_2_min, mesh_q_2_max, mesh_q_1_min,mesh_q_1_max],
-            levels = 256, vmin=vmin, vmax=vmax,
+            levels = 256, vmin = vmin, vmax = vmax,
                          cmap=cbar) 
     ax.contour(np.log10(grid_q), origin='lower',         
                     extent=[mesh_q_2_min, mesh_q_2_max, mesh_q_1_min,mesh_q_1_max],
-            levels = 64, colors = "#00305d", linewidths = 0.1, vmin = vmin)
+            levels = 64, colors = "#00305d", linewidths = 0.1, vmin = vmax)
     #cobar = fig.colorbar(
     #            ScalarMappable(norm=img.norm, cmap=img.cmap),
     #            ticks=range(vmin, vmax+1, 1))

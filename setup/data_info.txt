@@ -1,1 +1,1 @@
-{'directory': '/media/sseddon/Elements/data/XMaS/magnetite/data', 'file_reference': 'MAG001'}
+{'directory': '/media/sseddon-adm/Elements/data/XMaS/magnetite/data', 'file_reference': 'MAG001'}

@@ -51,7 +51,7 @@ def omega_scan(directory, file_reference, scan_num, create_files):
                                                   file_reference,
                                                   scan_num)
         
-    print(final_file_list)
+    print(len(final_file_list))
     start_t = time.time()
     
     tim_check = time.time()
@@ -64,7 +64,7 @@ def omega_scan(directory, file_reference, scan_num, create_files):
     possible_NR_PTS = []
     c = 0
     print(pickle_names[-1])
-    pickle_names = [pickle_names[-1]]
+    #pickle_names = [pickle_names[-1]]
 
     multiprocessing_result = pool.imap_unordered(nr_pts_finder, pickle_names)
     master_sets = list(multiprocessing_result)
@@ -230,7 +230,7 @@ def XMaS_parameter_setup(directory,
     REAL_HOR_LIM_HIG = gen_param['REAL_HOR_LIM_HIG']
     REAL_VER_LIM_LOW = gen_param['REAL_VER_LIM_LOW']
     REAL_VER_LIM_HIG = gen_param['REAL_VER_LIM_HIG']
-#
+    window_help = True#
     if window_help == True:
         final_file_list = sorted(final_file_list)
         k = int(len(final_file_list)/4)
