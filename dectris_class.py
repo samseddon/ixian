@@ -6,6 +6,7 @@ import math
 import numpy as np
 from numba import jit
 from equations import calc_qx, calc_qy, calc_qz, find_q_linear_fast
+from colour_bar import code_TUD_cbar as cbar
 """
 Created on Wed Jan 11 14:51:58 2023
 
@@ -13,7 +14,7 @@ Created on Wed Jan 11 14:51:58 2023
 """
 
 class Q_Space():
-    def __init__(self, scan_num, directory, symmetric):
+    def __init__(self, scan_num, directory, symmetric, SPACE_3D):
         self.scan_num = scan_num
         self.directory = directory
         
@@ -28,6 +29,8 @@ class Q_Space():
         self.NY_PTS = self.qlim_dict["ny_pts"]
         self.NZ_PTS = self.qlim_dict["nz_pts"]
         self.NR_PTS = self.qlim_dict["nr_pts"]
+
+        self.SPACE_3D = SPACE_3D
                            
         
         if symmetric == True:
@@ -156,7 +159,46 @@ class Q_Space():
                 self.data[indexes[0], indexes[1], indexes[2]] + data_point
         self.q_idx[indexes[0], indexes[1], indexes[2]] += 1
 
-    
+    def plot(self):
+        if self.SPACE_3D == True:
+            self.plot_3d()
+
+    def plot_2d(self, fig, ax, data, xaxis, yaxis, xlabel, ylabel,\
+            vmin = 1, vmax = 6):
+        ax.contourf(np.log10(data), origin='lower',                                  
+                       extent=[min(yaxis), max(yaxis), min(xaxis),max(xaxis)],
+            levels = 256, vmin = vmin, vmax = vmax,                            
+                         cmap=cbar)                                            
+        ax.contour(np.log10(data), origin='lower',                                         
+                       extent=[min(yaxis), max(yaxis), min(xaxis),max(xaxis)],
+            levels = 32, colors = "#00305d", linewidths = 0.1, vmin = vmax)       
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        return fig, ax
+
+    def plot_3d(self):
+        fig = plt.figure(figsize = (12,5))
+        ax_xz = plt.subplot(131, aspect = "equal")#, autoscale_on=False)#, adjustable='box-forced')
+        ax_yz = plt.subplot(132, aspect = "equal")#, autoscale_on=False)#, adjustable='box-forced')
+        ax_xy = plt.subplot(133, aspect = "equal")#, autoscale_on=False)#, adjustable='box-forced')
+        
+#        fig = plt.figure(figsize = (4,4))
+#        ax = plt.subplot(111)
+        fig, ax_xz = self.plot_2d(fig, ax_xz, np.mean(self.data, axis=1),\
+                self.q_x, self.q_z,\
+                xlabel = r"\rm Q$_z \ (\rm\AA^{-1})$",
+                ylabel = r"\rm Q$_x \ (\rm\AA^{-1})$")
+        fig, ax_yz = self.plot_2d(fig, ax_yz, np.mean(self.data, axis=0),\
+                self.q_y, self.q_z,\
+                xlabel = r"\rm Q$_z \ (\rm\AA^{-1})$", 
+                ylabel = r"\rm Q$_y \ (\rm\AA^{-1})$")
+        fig, ax_xy = self.plot_2d(fig, ax_xy, np.mean(self.data, axis=2),\
+                self.q_x, self.q_y,\
+                xlabel = r"\rm Q$_y \ (\rm\AA^{-1})$",
+                ylabel = r"\rm Q$_x \ (\rm\AA^{-1})$")
+        plt.tight_layout()
+        plt.savefig("local/images/"+str(self.scan_num) + "_3d.png", bbox_inches = "tight")
+        plt.show()
 
 
 

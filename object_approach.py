@@ -126,7 +126,7 @@ def omega_scan(directory, file_reference, scan_num, create_files):
     
     print("found q limits in this time", time.time() - tim_check)
 
-    q_space = Q_Space(scan_num, directory, symmetric = True)
+    q_space = Q_Space(scan_num, directory, symmetric = True, SPACE_3D = True)
     new_start_t = time.time()
     print('Populating Q_space with pixels')
     for filename in enumerate(pickle_names):
@@ -230,7 +230,7 @@ def XMaS_parameter_setup(directory,
     REAL_HOR_LIM_HIG = gen_param['REAL_HOR_LIM_HIG']
     REAL_VER_LIM_LOW = gen_param['REAL_VER_LIM_LOW']
     REAL_VER_LIM_HIG = gen_param['REAL_VER_LIM_HIG']
-    window_help = True#
+#    window_help = True#
     if window_help == True:
         final_file_list = sorted(final_file_list)
         k = int(len(final_file_list)/4)
