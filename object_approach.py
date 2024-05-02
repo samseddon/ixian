@@ -115,14 +115,15 @@ def omega_scan(directory, file_reference, scan_num, create_files):
     # NOTE here the qmax/qlim are found, needs to be put into a function.
     Q_max = [np.amax(qx_max), np.amax(qy_max), np.amax(qz_max)]
     Q_min = [np.amin(qx_min), np.amin(qy_min), np.amin(qz_min)]
-
-    Q_limit_dict_maker(directory, 
-                       scan_num, 
-                       Q_max, 
-                       Q_min, 
-                       NX_PTS,
-                       NY_PTS,
-                       NZ_PTS)
+    if create_files == True:
+        
+        Q_limit_dict_maker(directory, 
+                           scan_num, 
+                           Q_max, 
+                           Q_min, 
+                           NX_PTS,
+                           NY_PTS,
+                           NZ_PTS)
     
     print("found q limits in this time", time.time() - tim_check)
 

@@ -18,10 +18,19 @@ simplify file checker
 '''
 
 def main(scan_num):
-    if "-help" in sys.argv:
-        print("hello world")
+    if "-help" in sys.argv or len(sys.argv) == 1:
+        print("ixian has had a facelift!")
+        print("It now runs from the terminal, add these flags to do things")
+        print("-dataset   ", "lets you input the path to the data folder")
+        print("-hist   ", "run the last scan number run")
+        print("-oscan   ", "currently the standard qspace 3d generator")
+        print("-plot   ", "plots scan number. If files already exist no need to run oscan")
+        print("-fit   ", "Fits data with 4 2d gaussians. Tentatively works with Sam's data, but unstable")
+        print("-scratch   ", "Runs all calcs even if Qspace limit files already exist.\n\
+                If not added, will use old, even edited qspace files.\n\
+                Currently still runs all the calcs, but doesn't overwrite the limit file critically")
         return 1
-    if "-h" in sys.argv and os.path.exists("setup/history.txt"):
+    if "-hist" in sys.argv and os.path.exists("setup/history.txt"):
         scan_num = load_scan_num_history()
     if os.path.exists("local/") == False:
         os.mkdir("local/")
@@ -39,7 +48,7 @@ def main(scan_num):
                 data_setup()
 
     if "-oscan" in sys.argv:
-        if "-h" not in sys.argv:
+        if "-hist" not in sys.argv:
             scan_num = scan_num_input()
         with open("setup/data_info.txt","r") as inf:   
             dict1 = eval(inf.read())
@@ -49,8 +58,12 @@ def main(scan_num):
         
 
 
+        if "-scratch" in sys.argv:
+            omega_scan(directory, file_reference, scan_num, create_files = True)
+        else:
+            omega_scan(directory, file_reference, scan_num, create_files = False)
+            
 
-        omega_scan(directory, file_reference, scan_num, create_files = True)
          
     if "-plot" in sys.argv:
         if len(scan_num) == 0:
