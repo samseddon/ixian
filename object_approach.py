@@ -8,7 +8,8 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from dectris_class import *
+from dectris_class import Dectris_Image
+from q_space_class import Q_Space
 from colour_bar import code_TUD_cbar as cbar
 from multiprocessing import Pool
 """
@@ -17,7 +18,7 @@ Created on Wed Jan 11 14:49:21 2023
 @author: samseddon
 """
 
-def image_read(final_file_list, param, file_reference, directory):
+def image_read(final_file_list, param, file_reference, directory, whole_image):
     major_list = []
     pickle_names = []
     for image_number in range(len(final_file_list)):
@@ -25,12 +26,12 @@ def image_read(final_file_list, param, file_reference, directory):
                 directory, final_file_list, param])
     for image_number in range(len(final_file_list)):
         temp_file_name = "local/temp/" + str(image_number) + "_dec_class" + ".pickle"
-        temp_file = Dectris_Image(major_list[image_number])
+        temp_file = Dectris_Image(major_list[image_number], whole_image)
         pickle_jar(temp_file_name, temp_file)
         pickle_names.append(temp_file_name)
     return pickle_names
 
-def omega_scan(directory, file_reference, scan_num, create_files):
+def omega_scan(directory, file_reference, scan_num, create_files, whole_image):
     """ The main function to call, this finds the relevant data files, writes
     (if create_files = True) and reads the q_limits, initiles an array in 
     q-space, populates it with pixels and normalises the result. 
@@ -55,7 +56,7 @@ def omega_scan(directory, file_reference, scan_num, create_files):
     start_t = time.time()
     
     tim_check = time.time()
-    pickle_names = image_read(final_file_list, param, file_reference, directory) 
+    pickle_names = image_read(final_file_list, param, file_reference, directory, whole_image) 
     pool = Pool()
     multiprocessing_result = pool.imap_unordered(calc_Q_coordinates, pickle_names)
     all_images = list(multiprocessing_result)
@@ -154,6 +155,7 @@ def omega_scan(directory, file_reference, scan_num, create_files):
 #
 
 
+
 def Q_limit_dict_maker(directory,
                        scan_num,
                        Q_max,
@@ -231,7 +233,8 @@ def XMaS_parameter_setup(directory,
     REAL_HOR_LIM_HIG = gen_param['REAL_HOR_LIM_HIG']
     REAL_VER_LIM_LOW = gen_param['REAL_VER_LIM_LOW']
     REAL_VER_LIM_HIG = gen_param['REAL_VER_LIM_HIG']
-#    window_help = True#
+
+    #window_help = True#
     if window_help == True:
         final_file_list = sorted(final_file_list)
         k = int(len(final_file_list)/4)

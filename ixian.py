@@ -46,7 +46,8 @@ def main(scan_num):
     if os.path.exists("setup/data_info.txt") == False \
             or "-dataset" in sys.argv:
                 data_setup()
-
+    if "-wholeimage" in sys.argv:
+        whole_image = True
     if "-oscan" in sys.argv:
         if "-hist" not in sys.argv:
             scan_num = scan_num_input()
@@ -59,9 +60,11 @@ def main(scan_num):
 
 
         if "-scratch" in sys.argv:
-            omega_scan(directory, file_reference, scan_num, create_files = True)
+            create_files = True
+            omega_scan(directory, file_reference, scan_num, create_files, whole_image)
         else:
-            omega_scan(directory, file_reference, scan_num, create_files = False)
+            create_files = False
+            omega_scan(directory, file_reference, scan_num, create_files, whole_image)
             
 
          
