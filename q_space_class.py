@@ -153,6 +153,37 @@ class Q_Space():
     def plot(self):                                                            
         if self.SPACE_3D == True:                                              
             self.plot_3d()                                                     
+
+    def plot_sing(self):
+        print("input min value for plot, bare in mind its already a log plot")
+        vmin = input()
+        print("input max values for plot")
+        vmax = input()
+        fig = plt.figure(figsize = (5,5))                                     
+        ax = plt.subplot(111, aspect = "equal")#, autoscale_on=False)#, adjustable='box-forced')
+        fig, ax= self.plot_2d(fig, ax, np.mean(self.data, axis=1),\
+                self.q_x, self.q_z,\
+                xlabel = r"\rm Q$_z \ (\rm\AA^{-1})$",                         
+                ylabel = r"\rm Q$_x \ (\rm\AA^{-1})$", vmin = vmin, vmax = vmax)                         
+        plt.tight_layout()                                                     
+        plt.show()
+        fig = plt.figure(figsize = (5,5))                                     
+        ax = plt.subplot(111, aspect = "equal")#, autoscale_on=False)#, adjustable='box-forced')
+        fig, ax = self.plot_2d(fig, ax, np.mean(self.data, axis=0),\
+                self.q_y, self.q_z,\
+                xlabel = r"\rm Q$_z \ (\rm\AA^{-1})$",                         
+                ylabel = r"\rm Q$_y \ (\rm\AA^{-1})$")                         
+        plt.tight_layout()                                                     
+        plt.show()
+        fig = plt.figure(figsize = (5,5))                                     
+        ax = plt.subplot(111, aspect = "equal")#, autoscale_on=False)#, adjustable='box-forced')
+        fig, ax = self.plot_2d(fig, ax, np.mean(self.data, axis=2),\
+                self.q_x, self.q_y,\
+                xlabel = r"\rm Q$_y \ (\rm\AA^{-1})$",                         
+                ylabel = r"\rm Q$_x \ (\rm\AA^{-1})$")                         
+
+        plt.tight_layout()                                                     
+        plt.show()
                                                                                
     def plot_2d(self, fig, ax, data, xaxis, yaxis, xlabel, ylabel,\
             vmin = 1, vmax = 6):                                               

@@ -24,7 +24,8 @@ def main(scan_num):
         print("-dataset   ", "lets you input the path to the data folder")
         print("-hist   ", "run the last scan number run")
         print("-oscan   ", "currently the standard qspace 3d generator")
-        print("-plot   ", "plots scan number. If files already exist no need to run oscan")
+        print("-triplot   ", "plots scan number. If files already exist no need to run oscan")
+        print("singplot", "plots singles in order")
         print("-fit   ", "Fits data with 4 2d gaussians. Tentatively works with Sam's data, but unstable")
         print("-scratch   ", "Runs all calcs even if Qspace limit files already exist.\n\
                 If not added, will use old, even edited qspace files.\n\
@@ -46,6 +47,7 @@ def main(scan_num):
     if os.path.exists("setup/data_info.txt") == False \
             or "-dataset" in sys.argv:
                 data_setup()
+    whole_image = False
     if "-wholeimage" in sys.argv:
         whole_image = True
     if "-oscan" in sys.argv:
@@ -68,7 +70,7 @@ def main(scan_num):
             
 
          
-    if "-plot" in sys.argv:
+    if "-triplot" in sys.argv:
         if len(scan_num) == 0:
             scan_num = scan_num_input()
         data_location = "local/processed_files/"
@@ -76,6 +78,12 @@ def main(scan_num):
         loaded_qspace.plot()
         
 
+    if "-singplot" in sys.argv:
+        if len(scan_num) == 0:
+            scan_num = scan_num_input()
+        data_location = "local/processed_files/"
+        loaded_qspace, f_name = file_checker(scan_num, -1, data_location)
+        loaded_qspace.plot_sing()
 
     if "-fit" in sys.argv:
         if len(scan_num) > 0:
