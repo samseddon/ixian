@@ -4,8 +4,10 @@ import inspect
 #from pixel_selection import data_fill
 import numpy as np
 from matplotlib.cm import ScalarMappable
-from rsm_object_plotter import file_checker,  rsm_plot, slicer_and_dicer_3000, test_slicer, threeD_rsm_plot
+#from rsm_object_plotter import file_checker,  rsm_plot, slicer_and_dicer_3000, test_slicer, threeD_rsm_plot
 from object_approach import omega_scan
+import glob
+import pickle
 from scipy import interpolate
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
@@ -16,23 +18,33 @@ from plotting_functions import plot, fit
 check if optimal Qspace already exists 
 simplify file checker 
 '''
+def file_checker(s_num, s_ind, input_path):                                    
+    """                                                                        
+    """                                                                        
+#    print("Function" \                                                        
+#            + str(inspect.currentframe()).split(",")[-1][5:-1] \              
+#            + " called from"\                                                 
+#            + str(inspect.currentframe()).split(",")[1])                      
+    files = glob.glob(os.path.join(input_path, str(s_num) + '*'))              
+    file_name = max(files, key=os.path.getctime)                               
+    file_name = file_name[len(input_path):]                                    
+    if s_ind == -1:                                                            
+        with open(os.path.join(input_path,file_name), 'rb') as handle:         
+             read_file = pickle.load(handle)                                   
+                                                                               
+    elif s_ind == 0:                                                           
+        file_name = file_name[:len(file_name)-9]+file_name[-7:]                
+        with open(os.path.join(input_path,file_name), 'rb') as handle:         
+             read_file = pickle.load(handle)                                   
+    else:                                                                      
+        file_name = file_name[:(len(file_name)-8)]+str(s_ind)+file_name[-7:]   
+        with open(os.path.join(input_path,file_name), 'rb') as handle:         
+             read_file = pickle.load(handle)                                   
+    return read_file, file_name                        
+
+
 
 def main(scan_num):
-    if "-help" in sys.argv or len(sys.argv) == 1:
-        print("ixian has had a facelift!")
-        print("It now runs from the terminal, add these flags to do things")
-        print("-dataset   ", "lets you input the path to the data folder")
-        print("-hist   ", "run the last scan number run")
-        print("-oscan   ", "currently the standard qspace 3d generator")
-        print("-triplot   ", "plots scan number. If files already exist no need to run oscan")
-        print("singplot", "plots singles in order")
-        print("-fit   ", "Fits data with 4 2d gaussians. Tentatively works with Sam's data, but unstable")
-        print("-scratch   ", "Runs all calcs even if Qspace limit files already exist.\n\
-                If not added, will use old, even edited qspace files.\n\
-                Currently still runs all the calcs, but doesn't overwrite the limit file critically")
-        return 1
-    if "-hist" in sys.argv and os.path.exists("setup/history.txt"):
-        scan_num = load_scan_num_history()
     if os.path.exists("local/") == False:
         os.mkdir("local/")
     if os.path.exists("local/processed_files/") ==  False:
@@ -47,6 +59,21 @@ def main(scan_num):
     if os.path.exists("setup/data_info.txt") == False \
             or "-dataset" in sys.argv:
                 data_setup()
+    if "-help" in sys.argv or len(sys.argv) == 1:
+        print("ixian has had a facelift!")
+        print("It now runs from the terminal, add these flags to do things")
+        print("-dataset   ", "lets you input the path to the data folder")
+        print("-hist   ", "run the last scan number run")
+        print("-oscan   ", "currently the standard qspace 3d generator")
+        print("-triplot   ", "plots scan number. If files already exist no need to run oscan")
+        print("-singplot", "plots singles in order")
+        print("-fit   ", "Fits data with 4 2d gaussians. Tentatively works with Sam's data, but unstable")
+        print("-scratch   ", "Runs all calcs even if Qspace limit files already exist.\n\
+                If not added, will use old, even edited qspace files.\n\
+                Currently still runs all the calcs, but doesn't overwrite the limit file critically")
+        return 1
+    if "-hist" in sys.argv and os.path.exists("setup/history.txt"):
+        scan_num = load_scan_num_history()
     whole_image = False
     if "-wholeimage" in sys.argv:
         whole_image = True
