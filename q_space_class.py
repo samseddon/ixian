@@ -172,7 +172,7 @@ class Q_Space():
         fig, ax = self.plot_2d(fig, ax, np.mean(self.data, axis=0),\
                 self.q_y, self.q_z,\
                 xlabel = r"\rm Q$_z \ (\rm\AA^{-1})$",                         
-                ylabel = r"\rm Q$_y \ (\rm\AA^{-1})$")                         
+                ylabel = r"\rm Q$_y \ (\rm\AA^{-1})$", vmin = vmin, vmax = vmax)                         
         plt.tight_layout()                                                     
         plt.show()
         fig = plt.figure(figsize = (5,5))                                     
@@ -180,7 +180,7 @@ class Q_Space():
         fig, ax = self.plot_2d(fig, ax, np.mean(self.data, axis=2),\
                 self.q_x, self.q_y,\
                 xlabel = r"\rm Q$_y \ (\rm\AA^{-1})$",                         
-                ylabel = r"\rm Q$_x \ (\rm\AA^{-1})$")                         
+                ylabel = r"\rm Q$_x \ (\rm\AA^{-1})$", vmin = vmin, vmax = vmax)                         
 
         plt.tight_layout()                                                     
         plt.show()
