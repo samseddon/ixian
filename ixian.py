@@ -21,10 +21,6 @@ simplify file checker
 def file_checker(s_num, s_ind, input_path):                                    
     """                                                                        
     """                                                                        
-#    print("Function" \                                                        
-#            + str(inspect.currentframe()).split(",")[-1][5:-1] \              
-#            + " called from"\                                                 
-#            + str(inspect.currentframe()).split(",")[1])                      
     files = glob.glob(os.path.join(input_path, str(s_num) + '*'))              
     file_name = max(files, key=os.path.getctime)                               
     file_name = file_name[len(input_path):]                                    
@@ -69,14 +65,7 @@ def main(scan_num):
         print("-singplot", "plots singles in order")
         print("-fit   ", "Fits data with 4 2d gaussians. Tentatively works with Sam's data, but unstable")
         print("-scratch   ", "Runs all calcs even if Qspace limit files already exist.\n\
-                If not added, will use old, even edited qspace files.\n\
-                Currently still runs all the calcs, but doesn't overwrite the limit file critically")
-        return 1
-    if "-hist" in sys.argv and os.path.exists("setup/history.txt"):
-        scan_num = load_scan_num_history()
-    whole_image = False
-    if "-wholeimage" in sys.argv:
-        whole_image = True
+                If not added, will use old, even edited qspace files.\n")
     if "-oscan" in sys.argv:
         if "-hist" not in sys.argv:
             scan_num = scan_num_input()
@@ -292,3 +281,10 @@ if __name__ == "__main__":
     scan_num = []
     scan_num = main(scan_num)
     add_history(scan_num)
+import os
+import sys
+import inspect
+#from pixel_selection import data_fill
+import os
+import sys
+import inspect

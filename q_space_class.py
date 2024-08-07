@@ -91,10 +91,6 @@ class Q_Space():
                            self.QZ_GRAD]                                       
                                                                                
     def normalise_3D(self):                                                    
-        print("Function" \
-            + str(inspect.currentframe()).split(",")[-1][5:-1] \
-            + " called from"\
-            + str(inspect.currentframe()).split(",")[1])                       
         for s in range(self.data.shape[0]):                                    
             for t in range(self.data.shape[1]):                                
                 for u in range(self.data.shape[2]):                            

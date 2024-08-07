@@ -52,7 +52,6 @@ def omega_scan(directory, file_reference, scan_num, create_files, whole_image):
                                                   file_reference,
                                                   scan_num)
         
-    print(len(final_file_list))
     start_t = time.time()
     
     tim_check = time.time()
@@ -64,7 +63,6 @@ def omega_scan(directory, file_reference, scan_num, create_files, whole_image):
     tim_check = time.time()
     possible_NR_PTS = []
     c = 0
-    print(pickle_names[-1])
     #pickle_names = [pickle_names[-1]]
 
     multiprocessing_result = pool.imap_unordered(nr_pts_finder, pickle_names)
