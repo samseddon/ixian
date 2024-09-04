@@ -2,14 +2,15 @@ import os
 import matplotlib.pyplot as plt
 import math
 import inspect
+import time
 import numpy as np
-from equations import find_q_linear_fast
+from equations import find_q_linear_fast, existential_check, pickle_jar,\
+        pickle_unjar, progress_bar
 from colour_bar import code_TUD_cbar as cbar
 
 class Q_Space():                                                               
-    def __init__(self, scan_num, directory, symmetric, SPACE_3D):              
-        self.scan_num = scan_num                                               
-        self.directory = directory                                             
+    def __init__(self, scan_num, symmetric, SPACE_3D):              
+        self.scan_num = scan_num                                             
                                                                                
         self.qlim_dict = self.qlim()                                           
         self.QX_MIN = self.qlim_dict["qx_min"]                                 
@@ -22,7 +23,8 @@ class Q_Space():
         self.NY_PTS = self.qlim_dict["ny_pts"]                                 
         self.NZ_PTS = self.qlim_dict["nz_pts"]                                 
         self.NR_PTS = self.qlim_dict["nr_pts"]                                 
-                                                                               
+        self.time = 0
+
         self.SPACE_3D = SPACE_3D                                               
                                                                                
                                                                                
@@ -111,6 +113,15 @@ class Q_Space():
         with open(import_var,"r") as inf:                                      
             dict1 = eval(inf.read())                                           
         return dict1                                                           
+
+    def multi_image_populate(self, dectris_objects_filenames):                  
+        self.time = []
+        new_start_t = time.time()                                                  
+        for index, filename in enumerate(dectris_objects_filenames):               
+            dec_image = pickle_unjar(filename)                                     
+            self.populate_3D(dec_image)                                         
+            self.time.append(dec_image.time)
+            progress_bar(index + 1, len(dectris_objects_filenames), new_start_t)   
                                                                                
     def populate_3D(self, dec_image):                                          
         for coordinate_1 in range(np.shape(dec_image.data)[1]):                
@@ -155,6 +166,8 @@ class Q_Space():
         vmin = input()
         print("input max values for plot")
         vmax = input()
+        vmin = int(vmin)
+        vmax = int(vmax)
         fig = plt.figure(figsize = (5,5))                                     
         ax = plt.subplot(111, aspect = "equal")#, autoscale_on=False)#, adjustable='box-forced')
         fig, ax= self.plot_2d(fig, ax, np.mean(self.data, axis=1),\
@@ -217,6 +230,13 @@ class Q_Space():
         plt.tight_layout()                                                     
         plt.savefig("local/images/"+str(self.scan_num) + "_3d.png", bbox_inches = "tight")
         plt.show()                                                             
+
+
+    def save(self):
+        new_filename = existential_check(str(self.scan_num[0]) + "_new_3d_fill",
+                                     ".pickle",
+                                     "local/processed_files/")
+        pickle_jar(new_filename, self)
                                                                                
                                                                                
 

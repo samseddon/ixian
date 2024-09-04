@@ -43,6 +43,7 @@ class Dectris_Image():
         self.motor_mne   = file.header.get('motor_mne').split(' ')
         self.motor_pos   = file.header.get('motor_pos').split(' ')
         self.WAVELENGTH  = float(file.header.get('source_wavelength').split(' ')[0])
+        self.time = float(file.header.get('time').split(' ')[0])
         
         self.dict_count = {}
         self.dict_motor = {}

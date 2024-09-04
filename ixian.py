@@ -1,6 +1,7 @@
 import os
 import sys
 import inspect
+import time
 #from pixel_selection import data_fill
 import numpy as np
 from matplotlib.cm import ScalarMappable
@@ -12,6 +13,12 @@ from scipy import interpolate
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from plotting_functions import plot, fit
+from object_approach import image_read, calc_Q_of_dectris_objects,\
+        Q_space_optimisation, multi_image_populate
+from q_space_class import Q_Space
+
+
+
 
 # NOTE TO DO 
 '''
@@ -38,9 +45,7 @@ def file_checker(s_num, s_ind, input_path):
              read_file = pickle.load(handle)                                   
     return read_file, file_name                        
 
-
-
-def main(scan_num):
+def local_setup():
     if os.path.exists("local/") == False:
         os.mkdir("local/")
     if os.path.exists("local/processed_files/") ==  False:
@@ -51,47 +56,23 @@ def main(scan_num):
         os.mkdir("local/qlim")  
     if os.path.exists("local/images/") ==  False:
         os.mkdir("local/images")  
-    
     if os.path.exists("setup/data_info.txt") == False \
             or "-dataset" in sys.argv:
                 data_setup()
-    if "-help" in sys.argv or len(sys.argv) == 1:
-        print("ixian has had a facelift!")
-        print("It now runs from the terminal, add these flags to do things")
-        print("-dataset   ", "lets you input the path to the data folder")
-        print("-hist   ", "run the last scan number run")
-        print("-oscan   ", "currently the standard qspace 3d generator")
-        print("-triplot   ", "plots scan number. If files already exist no need to run oscan")
-        print("-singplot", "plots singles in order")
-        print("-fit   ", "Fits data with 4 2d gaussians. Tentatively works with Sam's data, but unstable")
-        print("-scratch   ", "Runs all calcs even if Qspace limit files already exist.\n\
-                If not added, will use old, even edited qspace files.\n")
-    if "-oscan" in sys.argv:
-        if "-hist" not in sys.argv:
-            scan_num = scan_num_input()
-        with open("setup/data_info.txt","r") as inf:   
-            dict1 = eval(inf.read())
 
-        directory = dict1["directory"]
-        file_reference = dict1["file_reference"]
-        
-
-
-        if "-scratch" in sys.argv:
-            create_files = True
-            omega_scan(directory, file_reference, scan_num, create_files, whole_image)
-        else:
-            create_files = False
-            omega_scan(directory, file_reference, scan_num, create_files, whole_image)
-            
-
-         
-    if "-triplot" in sys.argv:
-        if len(scan_num) == 0:
-            scan_num = scan_num_input()
-        data_location = "local/processed_files/"
-        loaded_qspace, f_name = file_checker(scan_num, -1, data_location)
-        loaded_qspace.plot()
+def oscan(scan_num):
+    dectris_objects_filenames = image_read(scan_num) 
+    master_sets = calc_Q_of_dectris_objects(dectris_objects_filenames)         
+    Q_space_optimisation(scan_num, master_sets, dectris_objects_filenames)        
+    
+    q_space = Q_Space(scan_num, symmetric = True, SPACE_3D = True)             
+    q_space.multi_image_populate(dectris_objects_filenames)         
+    q_space.normalise_3D()       
+    q_space.save()
+    
+    data_location = "local/processed_files/"
+    loaded_qspace, f_name = file_checker(scan_num, -1, data_location)
+    loaded_qspace.plot()
         
 
     if "-singplot" in sys.argv:
@@ -100,17 +81,23 @@ def main(scan_num):
         data_location = "local/processed_files/"
         loaded_qspace, f_name = file_checker(scan_num, -1, data_location)
         loaded_qspace.plot_sing()
-
-    if "-fit" in sys.argv:
-        if len(scan_num) > 0:
-            fit(scan_num)
-
-        else:
-            scan_num = scan_num_input()
-            fit(scan_num)
-
-    return scan_num
             
+def tscan(scan_num):
+    dectris_objects_filenames = image_read(scan_num) 
+    master_sets = calc_Q_of_dectris_objects(dectris_objects_filenames)         
+    Q_space_optimisation(scan_num, master_sets, dectris_objects_filenames)        
+    
+    q_space = Q_Space(scan_num, symmetric = True, SPACE_3D = True)             
+    q_space.multi_image_populate(dectris_objects_filenames)         
+    q_space.normalise_3D()       
+    q_space.save()
+    
+
+    data_location = "local/processed_files/"
+    loaded_qspace, f_name = file_checker(scan_num, -1, data_location)
+    print(loaded_qspace)
+    print(loaded_qspace.time)
+    loaded_qspace.plot()
 
 def scan_num_input():
     print("please input scan number/s as integers separated by commas if "+\
@@ -126,23 +113,53 @@ def data_setup():
             break
         print("unfortunately that directory does not exist"\
                 +" please try another")
-    
     data_setup = dict()
     data_setup["directory"] = directory
-    
     print("Now please enter unique experiment identifier, if not known"+\
             " please immediately contact your beamline scientist ;)")
-    
-    
     data_setup["file_reference"] = input()
     print("Recording these in file, to edit these values run the code"+\
             "with -dataset flag, or delete file 'data_info.txt' in setup"+\
             "folder")
-
     with open("setup/data_info.txt",'w') as inf:
         inf.write(str(data_setup))
 
+def add_history(scan_num):
+    with open("setup/history.txt",'w') as inf:
+        inf.write(str(scan_num))
 
+def load_scan_num_history():
+    if "-r" in sys.argv:
+        try:
+            with open("setup/history.txt","r") as inf:   
+                return eval(inf.read())
+        except FileNotFoundError:
+                return scan_num_input()
+    else:
+        return scan_num_input()
+
+if __name__ == "__main__":
+    start_t = time.time()
+
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-r", "--rerun-last", action="store_true", help="runs last scan number")
+    parser.add_argument("-Q", "--Q-Space-threeD", action="store_true", help="creates a Q-Space object from a given scan number (or multiple scan numbers) and populates it with the scans")
+    parser.add_argument("-s", "--scratch", action="store_true", help="Used in the instance that you want to run the code compltely again, overwriting parameter files etc, that may have been manually changed. When not used, if a scan has been run before the existing paramter files will be used to save time")
+    parser.add_argument("-T", "--timescan", action="store_true", help="creates a list of q_spaces, which can be then later opened and plotted as a function of time or motor position")
+    args = parser.parse_args()
+    
+    local_setup()
+    scan_num = load_scan_num_history()
+
+    if args.Q_Space_threeD:
+        oscan(scan_num) 
+    if args.timescan:
+        tscan(scan_num)
+    add_history(scan_num)
+    print("Complete, total duration: {}".format(int(time.time()                
+                                                    - start_t))                
+                                                    + ' seconds')
 
 #def twoD_Gaussian(xy, amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
 #    x, y = xy
@@ -266,25 +283,3 @@ def data_setup():
 ##            axis_3_limits, data_location + "images/", scan_num, fig, ax_xy)
 ##    plt.tight_layout()
 ##    plt.show()
-
-def add_history(scan_num):
-    with open("setup/history.txt",'w') as inf:
-        inf.write(str(scan_num))
-
-def load_scan_num_history():
-    with open("setup/history.txt","r") as inf:   
-        return eval(inf.read())
-
-    
-
-if __name__ == "__main__":
-    scan_num = []
-    scan_num = main(scan_num)
-    add_history(scan_num)
-import os
-import sys
-import inspect
-#from pixel_selection import data_fill
-import os
-import sys
-import inspect

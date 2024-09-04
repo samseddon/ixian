@@ -17,8 +17,69 @@ Created on Wed Jan 11 14:49:21 2023
 
 @author: samseddon
 """
+def Q_space_optimisation(scan_num, master_sets, dectris_objects_filenames):
+    qlim_dir = "local/qlim/"
+    potential_qlim_filename = qlim_dir\
+                         + "qlim_"\
+                         + str(scan_num[0])\
+                         + ".txt"                                                        
+    if "-s" in sys.argv or os.path.exists(potential_qlim_filename) == False:
+        set_x, set_y, set_z = set(), set(), set()
+        for element in master_sets:
+            unique_elements_x = np.unique(element[0])
+            for number in element[0]:
+                set_x.add(number)
+            unique_elements_y = np.unique(element[1])
+            for number in element[1]:
+                set_y.add(number)
+            unique_elements_z = np.unique(element[2])
+            for number in element[2]:
+                set_z.add(number)
+         
+        NX_PTS, NY_PTS, NZ_PTS = len(set_x), len(set_y), len(set_z)
+        qx_min, qy_min, qz_min, qx_max, qy_max, qz_max, q_min =\
+                [], [], [], [], [], [], []
+        tim_check = time.time()
+        for filename in dectris_objects_filenames:
+            dec_image = pickle_unjar(filename)
+            qx, qy, qz = dec_image.q_lim()
+            qx_min.append(qx[0])
+            qy_min.append(qy[0])
+            qz_min.append(qz[0])
+            qx_max.append(qx[1])
+            qy_max.append(qy[1])
+            qz_max.append(qz[1])
+            del dec_image
+        
+        Q_max = [np.amax(qx_max), np.amax(qy_max), np.amax(qz_max)]
+        Q_min = [np.amin(qx_min), np.amin(qy_min), np.amin(qz_min)]
+        
+        Q_limit_dict_maker(
+                           scan_num, 
+                           Q_max, 
+                           Q_min, 
+                           NX_PTS,
+                           NY_PTS,
+                           NZ_PTS)
 
-def image_read(final_file_list, param, file_reference, directory, whole_image):
+
+def calc_Q_of_dectris_objects(dectris_objects_filenames):
+    pool = Pool()
+    multiprocessing_result = pool.imap_unordered(calc_Q_coordinates, dectris_objects_filenames)
+    all_images = list(multiprocessing_result)
+    possible_NR_PTS = []
+    multiprocessing_result = pool.imap_unordered(nr_pts_finder, dectris_objects_filenames)
+    master_sets = list(multiprocessing_result)
+    pool.close()
+    pool.join()
+    return master_sets
+
+def image_read(scan_num, whole_image=False):
+    with open("setup/data_info.txt","r") as inf:                               
+        dict1 = eval(inf.read())                                               
+    directory = dict1["directory"]                                             
+    file_reference = dict1["file_reference"]
+    final_file_list, param = XMaS_parameter_setup(scan_num)
     major_list = []
     pickle_names = []
     for image_number in range(len(final_file_list)):
@@ -27,11 +88,20 @@ def image_read(final_file_list, param, file_reference, directory, whole_image):
     for image_number in range(len(final_file_list)):
         temp_file_name = "local/temp/" + str(image_number) + "_dec_class" + ".pickle"
         temp_file = Dectris_Image(major_list[image_number], whole_image)
+        print(temp_file.time)
         pickle_jar(temp_file_name, temp_file)
         pickle_names.append(temp_file_name)
     return pickle_names
+    
+def multi_image_populate(q_space, dectris_objects_filenames):
+    new_start_t = time.time()
+    for index, filename in enumerate(dectris_objects_filenames):
+        dec_image = pickle_unjar(filename)
+        q_space.populate_3D(dec_image)
+        progress_bar(index + 1, len(dectris_objects_filenames), new_start_t)
+    return q_space
 
-def omega_scan(directory, file_reference, scan_num, create_files, whole_image):
+def omega_scan(directory, file_reference, scan_num, whole_image=False):
     """ The main function to call, this finds the relevant data files, writes
     (if create_files = True) and reads the q_limits, initiles an array in 
     q-space, populates it with pixels and normalises the result. 
@@ -46,116 +116,21 @@ def omega_scan(directory, file_reference, scan_num, create_files, whole_image):
     """
     
     print('\nCreating parameter files')
-    
-    
-    final_file_list, param = XMaS_parameter_setup(directory,
-                                                  file_reference,
-                                                  scan_num)
-        
-    start_t = time.time()
-    
     tim_check = time.time()
-    pickle_names = image_read(final_file_list, param, file_reference, directory, whole_image) 
-    pool = Pool()
-    multiprocessing_result = pool.imap_unordered(calc_Q_coordinates, pickle_names)
-    all_images = list(multiprocessing_result)
-    print("calculating Q values took ", time.time()- tim_check)
-    tim_check = time.time()
-    possible_NR_PTS = []
-    c = 0
-    #pickle_names = [pickle_names[-1]]
-
-    multiprocessing_result = pool.imap_unordered(nr_pts_finder, pickle_names)
-    master_sets = list(multiprocessing_result)
-    pool.close()
-    pool.join()
-
-
-
-
-    set_x = set() 
-    set_y = set()
-    set_z = set()
-    for element in master_sets:
-        unique_elements_x = np.unique(element[0])
-        for number in element[0]:
-            set_x.add(number)
-        unique_elements_y = np.unique(element[1])
-        for number in element[1]:
-            set_y.add(number)
-        unique_elements_z = np.unique(element[2])
-        for number in element[2]:
-            set_z.add(number)
-     
-    NX_PTS = len(set_x)
-    NY_PTS = len(set_y)
-    NZ_PTS = len(set_z)
-    print("NR_PTS Calculation took ", time.time() - tim_check)
-    print('\nFinding q limits from sliced data and optimising Q_space mesh')
-    qx_min = []
-    qy_min = []
-    qz_min = []
-    qx_max = []
-    qy_max = []
-    qz_max = []
-    q_min = []
-    tim_check = time.time()
-    for filename in pickle_names:
-        dec_image = pickle_unjar(filename)
-        qx, qy, qz = dec_image.q_lim()
-        qx_min.append(qx[0])
-        qy_min.append(qy[0])
-        qz_min.append(qz[0])
-        qx_max.append(qx[1])
-        qy_max.append(qy[1])
-        qz_max.append(qz[1])
-        del dec_image
-    
-    # NOTE here the qmax/qlim are found, needs to be put into a function.
-    Q_max = [np.amax(qx_max), np.amax(qy_max), np.amax(qz_max)]
-    Q_min = [np.amin(qx_min), np.amin(qy_min), np.amin(qz_min)]
-    if create_files == True:
-        
-        Q_limit_dict_maker(directory, 
-                           scan_num, 
-                           Q_max, 
-                           Q_min, 
-                           NX_PTS,
-                           NY_PTS,
-                           NZ_PTS)
-    
-    print("found q limits in this time", time.time() - tim_check)
-
-    q_space = Q_Space(scan_num, directory, symmetric = True, SPACE_3D = True)
-    new_start_t = time.time()
-    print('Populating Q_space with pixels')
-    for filename in enumerate(pickle_names):
-        dec_image = pickle_unjar(filename[1])
-        q_space.populate_3D(dec_image)
-        progress_bar(filename[0] + 1,len(final_file_list),new_start_t)
-
-
+    dectris_objects_filenames = image_read(scan_num, file_reference, directory) 
+    master_sets = calc_Q_of_dectris_objects(dectris_objects_filenames)
+    Q_space_optimisation(scan_num, master_sets, dectris_objects_filenames)
+    q_space = Q_Space(scan_num, symmetric = True, SPACE_3D = True)
+    q_space = multi_image_populate(q_space, dectris_objects_filenames)
     q_space.normalise_3D()
+    q_space.save()
+    
+    #new_filename = existential_check(str(scan_num[0]) + "_new_3d_fill",
+    #                                 ".pickle",
+    #                                 "local/processed_files/")
+    #pickle_jar(new_filename, q_space)
 
-
-    orig_filename = str(scan_num[0])+'_new_3d_fill'
-    suffix = '.pickle'
-    new_filename = existential_check(orig_filename,
-                                     suffix, 
-                                     "local/processed_files/")
-    #NOTE make processed files folder here
-    with open(new_filename,'wb') as handle:
-        pickle.dump(q_space, handle, protocol=pickle.HIGHEST_PROTOCOL)
-#    
-    print("Complete, total duration: {}".format(int(time.time() 
-                                                    - start_t))
-                                                    + ' seconds')
-#
-
-
-
-def Q_limit_dict_maker(directory,
-                       scan_num,
+def Q_limit_dict_maker(scan_num,
                        Q_max,
                        Q_min,
                        NX_PTS,
@@ -177,24 +152,18 @@ def Q_limit_dict_maker(directory,
    
     if os.path.exists(qlim_dir) == False:
         os.makedirs(qlim_dir)
+                                                                           
     filename = qlim_dir\
                + "qlim_"\
                + str(scan_num[0])\
                + ".txt"                                                        
-                                                                           
     with open(filename,'w') as inf:                                            
         inf.write(str(qlim_dict))                                              
     print('Created file',filename)   
 
-def XMaS_parameter_setup(directory,
-                         file_reference,
-                         scan_num,
+def XMaS_parameter_setup(scan_num,
                          window_help = False):
                                
-    print("Function" \
-        + str(inspect.currentframe()).split(",")[-1][5:-1] \
-        + " called from"\
-        + str(inspect.currentframe()).split(",")[1])
     """ When called, checks if you want to overwrite an existing parameter 
     file, and if so, calls a standard parameter file and writes a spot 
     specific parameter file after plotting a red square indicating the real
@@ -208,6 +177,11 @@ def XMaS_parameter_setup(directory,
                spot_dict(dict)        : dictionary of scans and spots
                scan_num(list)        : list of scan numbers being read
     """
+    with open("setup/data_info.txt","r") as inf:                               
+        dict1 = eval(inf.read())                                               
+    directory = dict1["directory"]                                             
+    file_reference = dict1["file_reference"]
+
     filename = directory \
                + '/user_defined_parameters/param/param_' \
                + str(scan_num[0]) \
@@ -219,9 +193,13 @@ def XMaS_parameter_setup(directory,
                     if file.startswith(file_reference) \
                     and file.endswith(".edf")]
     
-    final_file_list = [file for file in experiment_files \
+    file_list = [file for file in experiment_files \
                     if int(file.split("_")[-2]) \
                     in scan_num]
+    
+    order = [int(file.split("_")[-1][:-4]) for file in file_list]
+    final_file_list = [file[0] for file in sorted(zip(file_list, order), key = lambda x: x[1])]
+
     # final_file_list a list of all files from relevant scan
     # NOTE -2 is a magic number, based on the XMaS file saving format
     
@@ -282,13 +260,4 @@ def XMaS_parameter_setup(directory,
         ax_2.add_patch(rect2) 
         
         plt.show()
-#    
     return final_file_list, gen_param
-    #with open(filename,'w') as inf:
-    #    inf.write(str(gen_param))
-    #print('Created file',
-    #      filename,
-    #      '\n Change slice region in parameter file')
-
-
-
