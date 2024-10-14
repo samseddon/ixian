@@ -91,7 +91,8 @@ class Q_Space():
                            self.QX_GRAD,                                       
                            self.QY_GRAD,                                       
                            self.QZ_GRAD]                                       
-                                                                               
+
+
     def normalise_3D(self):                                                    
         for s in range(self.data.shape[0]):                                    
             for t in range(self.data.shape[1]):                                
@@ -113,6 +114,17 @@ class Q_Space():
         with open(import_var,"r") as inf:                                      
             dict1 = eval(inf.read())                                           
         return dict1                                                           
+
+    def sing_image_populate(self, dectris_object_filename):
+        dec_image = pickle_unjar(dectris_object_filename)
+        self.populate_3D(dec_image)
+        self.TIME = dec_image.TIME
+        self.TEMP = dec_image.TEMP
+        try:
+            self.MAG_FIELD = dec_image.MAG_FIELD
+        except:
+            KeyError
+        #self.temp = dec_image.TEMP
 
     def multi_image_populate(self, dectris_objects_filenames):                  
         self.time = []
@@ -230,6 +242,33 @@ class Q_Space():
         plt.tight_layout()                                                     
         plt.savefig("local/images/"+str(self.scan_num) + "_3d.png", bbox_inches = "tight")
         plt.show()                                                             
+
+    def plot_for_gif(self):
+        fig = plt.figure(figsize = (12,6))                                     
+        ax_xz = plt.subplot(131, aspect = "equal")#, autoscale_on=False)#, adjustable='box-forced')
+        ax_yz = plt.subplot(132, aspect = "equal")#, autoscale_on=False)#, adjustable='box-forced')
+        ax_xy = plt.subplot(133, aspect = "equal")#, autoscale_on=False)#, adjustable='box-forced')
+                                                                               
+#        fig = plt.figure(figsize = (4,4))                                     
+#        ax = plt.subplot(111)                                                 
+        fig, ax_xz = self.plot_2d(fig, ax_xz, np.mean(self.data, axis=1),\
+                self.q_x, self.q_z,\
+                xlabel = r"\rm Q$_z \ (\rm\AA^{-1})$",                         
+                ylabel = r"\rm Q$_x \ (\rm\AA^{-1})$")                         
+        fig, ax_yz = self.plot_2d(fig, ax_yz, np.mean(self.data, axis=0),\
+                self.q_y, self.q_z,\
+                xlabel = r"\rm Q$_z \ (\rm\AA^{-1})$",                         
+                ylabel = r"\rm Q$_y \ (\rm\AA^{-1})$")                         
+        fig, ax_xy = self.plot_2d(fig, ax_xy, np.mean(self.data, axis=2),\
+                self.q_x, self.q_y,\
+                xlabel = r"\rm Q$_y \ (\rm\AA^{-1})$",                         
+                ylabel = r"\rm Q$_x \ (\rm\AA^{-1})$")                         
+        plt.tight_layout()                                                     
+        filename = "local/gif/images/"+str(self.scan_num) + "_" + str(self.TIME)+ "_gif.png"
+        plt.savefig(filename, bbox_inches = "tight")
+        plt.close()
+        return filename
+
 
 
     def save(self):

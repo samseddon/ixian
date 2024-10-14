@@ -88,7 +88,6 @@ def image_read(scan_num, whole_image=False):
     for image_number in range(len(final_file_list)):
         temp_file_name = "local/temp/" + str(image_number) + "_dec_class" + ".pickle"
         temp_file = Dectris_Image(major_list[image_number], whole_image)
-        print(temp_file.time)
         pickle_jar(temp_file_name, temp_file)
         pickle_names.append(temp_file_name)
     return pickle_names

@@ -16,6 +16,7 @@ from plotting_functions import plot, fit
 from object_approach import image_read, calc_Q_of_dectris_objects,\
         Q_space_optimisation, multi_image_populate
 from q_space_class import Q_Space
+from equations import pickle_jar, pickle_unjar
 
 
 
@@ -56,6 +57,10 @@ def local_setup():
         os.mkdir("local/qlim")  
     if os.path.exists("local/images/") ==  False:
         os.mkdir("local/images")  
+    if os.path.exists("local/gif/") == False:
+        os.mkdir("local/gif/")
+    if os.path.exists("local/gif/images/") ==  False:
+        os.mkdir("local/gif/images")  
     if os.path.exists("setup/data_info.txt") == False \
             or "-dataset" in sys.argv:
                 data_setup()
@@ -83,21 +88,62 @@ def oscan(scan_num):
         loaded_qspace.plot_sing()
             
 def tscan(scan_num):
-    dectris_objects_filenames = image_read(scan_num) 
-    master_sets = calc_Q_of_dectris_objects(dectris_objects_filenames)         
-    Q_space_optimisation(scan_num, master_sets, dectris_objects_filenames)        
-    
-    q_space = Q_Space(scan_num, symmetric = True, SPACE_3D = True)             
-    q_space.multi_image_populate(dectris_objects_filenames)         
-    q_space.normalise_3D()       
-    q_space.save()
-    
+    dectris_object_filenames = image_read(scan_num) 
+    master_sets = calc_Q_of_dectris_objects(dectris_object_filenames)         
+    Q_space_optimisation(scan_num, master_sets, dectris_object_filenames)        
+    q_space_list = []    
+    for filename in dectris_object_filenames:
+        q_space = Q_Space(scan_num, symmetric = False, SPACE_3D = True)
+        q_space.sing_image_populate(filename)
+        q_space.normalise_3D()
+        q_space_list.append(q_space)
+    filename ="local/processed_files" + str(scan_num[0]) + "_1D_tscan"+ ".pickle"
+    pickle_jar(filename, q_space_list)
 
-    data_location = "local/processed_files/"
-    loaded_qspace, f_name = file_checker(scan_num, -1, data_location)
-    print(loaded_qspace)
-    print(loaded_qspace.time)
-    loaded_qspace.plot()
+def mess_around(scan_num):
+    filename ="local/processed_files" + str(scan_num[0]) + "_1D_tscan"+ ".pickle"
+    q_space_list = pickle_unjar(filename)
+    int_area = []
+    temps = []
+    times = []
+    mag_fields = []
+    for q_space in q_space_list: 
+        times.append(q_space.TIME) 
+        temps.append(q_space.TEMP)
+        mag_fields.append(q_space.MAG_FIELD)
+        int_area.append(sum(sum(sum(q_space.data))))
+    min_times = min(times)
+    norm_times = []
+    for time in times:
+        norm_times.append(time-min_times)
+    gif_filenames = []
+    for q_space in q_space_list:
+        gif_filenames.append(q_space.plot_for_gif())
+     
+    import imageio
+    images = []
+    print(gif_filenames)
+    with imageio.get_writer('test.gif', mode='I') as writer:
+        for filename in gif_filenames:
+            image = imageio.imread(filename)
+            writer.append_data(image)
+
+
+
+    #plt.figure()
+    #plt.plot(mag_fields, int_area)
+    #plt.show()
+    #q_space = Q_Space(scan_num, symmetric = True, SPACE_3D = True)             
+    #q_space.multi_image_populate(dectris_objects_filenames)         
+    #q_space.normalise_3D()       
+    #q_space.save()
+    #
+
+    #data_location = "local/processed_files/"
+    #loaded_qspace, f_name = file_checker(scan_num, -1, data_location)
+    #print(loaded_qspace)
+    #print(loaded_qspace.time)
+    #loaded_qspace.plot()
 
 def scan_num_input():
     print("please input scan number/s as integers separated by commas if "+\
@@ -147,6 +193,7 @@ if __name__ == "__main__":
     parser.add_argument("-Q", "--Q-Space-threeD", action="store_true", help="creates a Q-Space object from a given scan number (or multiple scan numbers) and populates it with the scans")
     parser.add_argument("-s", "--scratch", action="store_true", help="Used in the instance that you want to run the code compltely again, overwriting parameter files etc, that may have been manually changed. When not used, if a scan has been run before the existing paramter files will be used to save time")
     parser.add_argument("-T", "--timescan", action="store_true", help="creates a list of q_spaces, which can be then later opened and plotted as a function of time or motor position")
+    parser.add_argument("-m", "--mess", action="store_true", help="opens a list of timescan generated qspaces and allows the plotting of these")
     args = parser.parse_args()
     
     local_setup()
@@ -156,6 +203,8 @@ if __name__ == "__main__":
         oscan(scan_num) 
     if args.timescan:
         tscan(scan_num)
+    if args.mess:
+        mess_around(scan_num)
     add_history(scan_num)
     print("Complete, total duration: {}".format(int(time.time()                
                                                     - start_t))                
