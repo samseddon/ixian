@@ -1,5 +1,7 @@
 # ixian
-Integral X-ray Image ANalysis
+Integral X-ray Image ANalysis is a python based command line run tool designed
+to take Dectris imaged X-Ray diffraction data, and convert it into reciprocal
+space for analysis and publication level plotting. 
 
 
 # Command line flags
